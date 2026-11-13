@@ -1,0 +1,57 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\FlightGroup;
+use App\Models\User;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+
+class FlightGroupService
+{
+    /**
+     * Create or update a group together with its flights. The flights are replaced as a set, and the
+     * group's departure/return dates follow its first and last flight.
+     *
+     * @param  array<string, mixed>  $attributes  validated group fields (FlightGroupRequest)
+     * @param  list<array<string, mixed>>  $legs  validated flights, in any order
+     */
+    public function save(FlightGroup $group, array $attributes, array $legs, User $by): FlightGroup
+    {
+        return DB::transaction(function () use ($group, $attributes, $legs, $by) {
+            if ($group->exists) {
+                // Same lock bookings take, so no hold can land between this check and the save.
+                $locked = FlightGroup::query()->whereKey($group->id)->lockForUpdate()->firstOrFail();
+                $taken = $locked->total_seats - $locked->seatsAvailable();
+                if ($attributes['total_seats'] < $taken) {
+                    throw ValidationException::withMessages([
+                        'total_seats' => "{$taken} seats are already booked or on hold, so the group can't have fewer.",
+                    ]);
+                }
+            }
+
+            usort($legs, fn (array $a, array $b) => strcmp($a['departs_at'], $b['departs_at']));
+
+            $group->fill($attributes);
+            $group->sector = strtoupper($attributes['sector']);
+            $group->departure_date = Carbon::parse($legs[0]['departs_at'])->toDateString();
+            $group->return_date = count($legs) > 1 ? Carbon::parse(end($legs)['departs_at'])->toDateString() : null;
+            $group->created_by ??= $by->id;
+            $group->save();
+
+            $group->legs()->delete();
+            foreach (array_values($legs) as $i => $leg) {
+                $group->legs()->create([
+                    ...$leg,
+                    'flight_number' => strtoupper(str_replace(' ', '', $leg['flight_number'])),
+                    'origin' => strtoupper($leg['origin']),
+                    'destination' => strtoupper($leg['destination']),
+                    'sort_order' => $i,
+                ]);
+            }
+
+            return $group->load('legs');
+        });
+    }
+}

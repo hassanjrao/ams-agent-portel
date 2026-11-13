@@ -1,8 +1,15 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
-import { BookOpen, FolderGit2, LayoutGrid } from '@lucide/vue';
+import { Link, usePage } from '@inertiajs/vue3';
+import {
+    Building2,
+    Landmark,
+    LayoutGrid,
+    Plane,
+    PlaneTakeoff,
+    Tags,
+} from '@lucide/vue';
+import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
-import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import {
@@ -15,28 +22,31 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import admin from '@/routes/admin';
 import type { NavItem } from '@/types';
 
-const mainNavItems: NavItem[] = [
+const page = usePage();
+const isAdmin = computed(() => page.props.auth.user?.role === 'admin');
+
+const adminNavItems: NavItem[] = [
+    { title: 'Dashboard', href: admin.dashboard(), icon: LayoutGrid },
+    { title: 'Groups', href: admin.groups.index(), icon: PlaneTakeoff },
+    { title: 'Agencies', href: admin.agencies.index(), icon: Building2 },
+    { title: 'Airlines', href: admin.airlines.index(), icon: Plane },
+    { title: 'Categories', href: admin.groupTypes.index(), icon: Tags },
     {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
+        title: 'Bank accounts',
+        href: admin.bankAccounts.index(),
+        icon: Landmark,
     },
 ];
 
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/vue-starter-kit',
-        icon: FolderGit2,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
-        icon: BookOpen,
-    },
+const agentNavItems: NavItem[] = [
+    { title: 'Dashboard', href: dashboard(), icon: LayoutGrid },
 ];
+
+const items = computed(() => (isAdmin.value ? adminNavItems : agentNavItems));
+const home = computed(() => (isAdmin.value ? admin.dashboard() : dashboard()));
 </script>
 
 <template>
@@ -45,7 +55,7 @@ const footerNavItems: NavItem[] = [
             <SidebarMenu>
                 <SidebarMenuItem>
                     <SidebarMenuButton size="lg" as-child>
-                        <Link :href="dashboard()">
+                        <Link :href="home">
                             <AppLogo />
                         </Link>
                     </SidebarMenuButton>
@@ -54,11 +64,10 @@ const footerNavItems: NavItem[] = [
         </SidebarHeader>
 
         <SidebarContent>
-            <NavMain :items="mainNavItems" />
+            <NavMain :items="items" :label="isAdmin ? 'Admin' : 'Agency'" />
         </SidebarContent>
 
         <SidebarFooter>
-            <NavFooter :items="footerNavItems" />
             <NavUser />
         </SidebarFooter>
     </Sidebar>
