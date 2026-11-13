@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Enums\UserRole;
+use App\Models\Agency;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -43,6 +45,28 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * An AMS staff member with access to the admin side.
+     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => UserRole::Admin,
+            'agency_id' => null,
+        ]);
+    }
+
+    /**
+     * Staff of a travel agency that books seats.
+     */
+    public function agent(?Agency $agency = null): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => UserRole::Agent,
+            'agency_id' => $agency ?? Agency::factory(),
         ]);
     }
 
