@@ -8,8 +8,9 @@ use App\Http\Controllers\Agent\PaymentController;
 use App\Http\Controllers\ReceiptController;
 use Illuminate\Support\Facades\Route;
 
-// Travel agencies. Admins who land here are sent to the admin dashboard.
-Route::middleware(['auth', 'agent'])->group(function () {
+// Travel agencies. Admins who land here are sent to the admin dashboard. Agencies beyond the
+// free plan can open every page here, but their actions (any non-GET) are refused.
+Route::middleware(['auth', 'agent', 'free-plan'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
 
     Route::get('groups', [GroupController::class, 'index'])->name('groups.index');

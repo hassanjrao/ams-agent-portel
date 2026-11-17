@@ -39,7 +39,9 @@ defineOptions({
 });
 
 const agency = computed(() => usePage().props.myAgency);
-const canBook = computed(() => agency.value?.status === 'active');
+const canBook = computed(
+    () => agency.value?.status === 'active' && !agency.value.locked,
+);
 
 const form = useForm<{
     adults: number;
@@ -361,7 +363,11 @@ const errors = computed(() => form.errors as Partial<Record<string, string>>);
                     v-if="!canBook"
                     class="text-center text-xs text-muted-foreground"
                 >
-                    Booking opens once AMS approves your agency.
+                    {{
+                        agency?.locked
+                            ? 'Booking is not available for your agency on the free plan.'
+                            : 'Booking opens once AMS approves your agency.'
+                    }}
                 </p>
             </aside>
         </div>

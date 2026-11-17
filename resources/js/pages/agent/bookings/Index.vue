@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { BookOpenText, Eye, ReceiptText, Search, XCircle } from '@lucide/vue';
 import { computed, reactive, ref, watch } from 'vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
@@ -54,6 +54,9 @@ watch(filters, () => {
         );
     }, 300);
 });
+
+// An agency beyond the free plan sees its bookings but can't act on them.
+const locked = computed(() => !!usePage().props.myAgency?.locked);
 
 // Releasing a running hold from the list, after a confirmation.
 const releasing = ref<BookingRow | null>(null);
@@ -198,7 +201,9 @@ function release() {
                             <div class="flex items-center justify-end gap-1.5">
                                 <!-- Paying opens the payment form on this booking. -->
                                 <Button
-                                    v-if="booking.status === 'on_hold'"
+                                    v-if="
+                                        booking.status === 'on_hold' && !locked
+                                    "
                                     size="sm"
                                     as-child
                                 >
@@ -212,7 +217,9 @@ function release() {
                                     >
                                 </Button>
                                 <Button
-                                    v-if="booking.seconds_left !== null"
+                                    v-if="
+                                        booking.seconds_left !== null && !locked
+                                    "
                                     size="sm"
                                     variant="outline"
                                     class="text-destructive hover:text-destructive"

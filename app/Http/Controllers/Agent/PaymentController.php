@@ -10,6 +10,7 @@ use App\Models\BankAccount;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Presenters\PaymentPresenter;
+use App\Services\FreePlan;
 use App\Services\PaymentService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -59,7 +60,7 @@ class PaymentController extends Controller
             'filters' => $filters,
             'bankAccounts' => BankAccount::query()->where('is_active', true)->orderBy('sort_order')->get(['id', 'bank_name', 'account_title', 'account_number', 'iban', 'branch']),
             'bookings' => $bookings,
-            'canPay' => $agency->isActive(),
+            'canPay' => $agency->isActive() && FreePlan::covers($agency),
             'pendingTotal' => (int) $agency->payments()->where('status', PaymentStatus::Pending)->sum('amount'),
         ]);
     }

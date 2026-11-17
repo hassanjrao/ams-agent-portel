@@ -6,6 +6,7 @@ import {
     CheckCircle2,
     Eye,
     Landmark,
+    Lock,
     Search,
 } from '@lucide/vue';
 import { computed, reactive, ref, watch } from 'vue';
@@ -36,6 +37,7 @@ type AgencyRow = {
     city: string;
     bookings_count: number;
     status: 'pending' | 'active' | 'suspended';
+    over_free_plan: boolean;
     balance: number;
     created_at: string;
 };
@@ -208,7 +210,18 @@ const dialog = computed(() => {
                                 {{ formatPKR(agency.balance) }}
                             </td>
                             <td>
-                                <StatusBadge :status="agency.status" />
+                                <div
+                                    class="flex flex-wrap items-center gap-1.5"
+                                >
+                                    <StatusBadge :status="agency.status" />
+                                    <span
+                                        v-if="agency.over_free_plan"
+                                        class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap text-red-800 dark:bg-red-950 dark:text-red-300"
+                                        title="Signed up after the free plan's limit: can log in but not book or pay"
+                                        ><Lock class="size-3" /> Over free
+                                        limit</span
+                                    >
+                                </div>
                             </td>
                             <td>
                                 <div

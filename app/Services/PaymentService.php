@@ -33,6 +33,9 @@ class PaymentService
         if (! $agency || ! $agency->isActive()) {
             throw ValidationException::withMessages(['amount' => 'Your agency must be approved before sending payments.']);
         }
+        if (! FreePlan::covers($agency)) {
+            throw ValidationException::withMessages(['amount' => FreePlan::lockedMessage()]);
+        }
 
         $path = $receipt->store("receipts/{$agency->id}/".now()->format('Y-m'), self::RECEIPT_DISK);
         if ($path === false) {

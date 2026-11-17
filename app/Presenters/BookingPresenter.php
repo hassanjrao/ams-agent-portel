@@ -7,6 +7,7 @@ use App\Models\Booking;
 use App\Models\BookingPassenger;
 use App\Models\Payment;
 use App\Models\User;
+use App\Services\FreePlan;
 
 class BookingPresenter
 {
@@ -44,6 +45,8 @@ class BookingPresenter
     public static function detail(Booking $booking, User $viewer): array
     {
         $holdActive = $booking->isHoldActive();
+        // An agency beyond the free plan sees its bookings but can't act on them.
+        $agencyMayAct = $viewer->isAdmin() || FreePlan::covers($booking->agency);
 
         return [
             ...self::row($booking),
@@ -76,13 +79,13 @@ class BookingPresenter
                 // An agency edits names and cancels only while its hold runs; AMS until it's cancelled.
                 'edit_passengers' => $viewer->isAdmin()
                     ? in_array($booking->status, [BookingStatus::OnHold, BookingStatus::Confirmed], true)
-                    : $holdActive,
+                    : $holdActive && $agencyMayAct,
                 'cancel' => $viewer->isAdmin()
                     ? in_array($booking->status, [BookingStatus::OnHold, BookingStatus::Confirmed], true)
-                    : $holdActive,
+                    : $holdActive && $agencyMayAct,
                 'confirm' => $viewer->isAdmin() && in_array($booking->status, [BookingStatus::OnHold, BookingStatus::Expired], true),
                 // An expired hold can still be paid: AMS confirms it if its seats are still free.
-                'pay' => ! $viewer->isAdmin() && $booking->status !== BookingStatus::Cancelled,
+                'pay' => ! $viewer->isAdmin() && $agencyMayAct && $booking->status !== BookingStatus::Cancelled,
             ],
         ];
     }

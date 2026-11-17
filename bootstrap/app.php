@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureAgencyWithinFreePlan;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\EnsureUserIsAgent;
 use App\Http\Middleware\HandleAppearance;
@@ -22,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
             'agent' => EnsureUserIsAgent::class,
+            'free-plan' => EnsureAgencyWithinFreePlan::class,
         ]);
 
         $middleware->web(append: [

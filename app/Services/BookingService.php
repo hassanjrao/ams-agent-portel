@@ -34,6 +34,9 @@ class BookingService
         if (! $agency || ! $agency->isActive()) {
             throw ValidationException::withMessages(['agency' => 'Your agency is not approved for booking yet.']);
         }
+        if (! FreePlan::covers($agency)) {
+            throw ValidationException::withMessages(['agency' => FreePlan::lockedMessage()]);
+        }
         if ($adults < 1) {
             throw ValidationException::withMessages(['adults' => 'A booking needs at least one adult.']);
         }

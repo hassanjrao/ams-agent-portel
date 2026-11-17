@@ -8,6 +8,7 @@ use App\Enums\PaymentStatus;
 use App\Models\Agency;
 use App\Models\Booking;
 use App\Models\Payment;
+use App\Services\FreePlan;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -57,8 +58,13 @@ class HandleInertiaRequests extends Middleware
                     'name' => $user->agency->name,
                     'status' => $user->agency->status->value,
                     'balance' => $user->agency->balance(),
+                    // Beyond the free plan: can look, can't act.
+                    'locked' => ! FreePlan::covers($user->agency),
+                    'lockedMessage' => FreePlan::lockedMessage(),
                 ]
                 : null,
+            // For AMS staff: the free plan's limit and whether agencies are locked out by it.
+            'freePlan' => fn () => $user?->isAdmin() ? FreePlan::summary() : null,
             // What is waiting for AMS, as badges in the admin sidebar.
             'adminQueue' => fn () => $user?->isAdmin()
                 ? [

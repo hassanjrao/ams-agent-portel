@@ -29,4 +29,24 @@ return [
     // Prefix on booking references (AMS-26110001) and ledger vouchers (AMSV-26110001).
     'reference_prefix' => env('PORTAL_REFERENCE_PREFIX', 'AMS'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Free plan
+    |--------------------------------------------------------------------------
+    |
+    | How many agencies may use the portal for free: the first ones to sign up.
+    | Later agencies can still sign up and log in, but cannot book, pay or change
+    | bookings, and AMS staff are shown that the limit is reached. Set to 0 (or
+    | leave empty) to lift the limit once the portal is upgraded.
+    |
+    */
+
+    'free_agency_limit' => (int) env('PORTAL_FREE_AGENCY_LIMIT', 5),
+
+    // Who to contact to lift the limit, shown to AMS staff in the "limit reached" notice.
+    'upgrade_contact' => [
+        'name' => 'Hassan Javaid Rao',
+        'whatsapp' => '923035209409',
+    ],
+
 ];

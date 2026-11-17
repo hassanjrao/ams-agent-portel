@@ -2,6 +2,7 @@
 import AgencyBalanceChip from '@/components/AgencyBalanceChip.vue';
 import AgencyStatusBanner from '@/components/AgencyStatusBanner.vue';
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
+import FreePlanNotice from '@/components/FreePlanNotice.vue';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import type { BreadcrumbItem } from '@/types';
 
@@ -28,7 +29,10 @@ withDefaults(
                 />
             </div>
         </div>
-        <AgencyBalanceChip />
+        <div class="flex items-center gap-2">
+            <FreePlanNotice />
+            <AgencyBalanceChip />
+        </div>
     </header>
     <AgencyStatusBanner />
 </template>

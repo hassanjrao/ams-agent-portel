@@ -8,6 +8,7 @@ use App\Http\Requests\StatementRequest;
 use App\Models\Agency;
 use App\Models\Booking;
 use App\Services\AgencyService;
+use App\Services\FreePlan;
 use App\Services\LedgerService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -44,10 +45,14 @@ class AgencyController extends Controller
             ->paginate(25)
             ->withQueryString();
 
+        $covered = FreePlan::coveredIds()->flip();
+
         return Inertia::render('admin/agencies/Index', [
             'agencies' => $agencies->through(fn (Agency $a) => [
                 ...$a->only(['id', 'name', 'contact_person', 'phone', 'email', 'city', 'bookings_count']),
                 'status' => $a->status->value,
+                // Signed up after the free plan's limit: can log in but not act.
+                'over_free_plan' => ! $covered->has($a->id),
                 'balance' => (int) $a->total_debit - (int) $a->total_credit,
                 'created_at' => $a->created_at->toDateString(),
             ]),

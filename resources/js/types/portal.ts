@@ -186,6 +186,18 @@ export type SharedAgency = {
     name: string;
     status: 'pending' | 'active' | 'suspended';
     balance: number;
+    // Signed up beyond the free plan: can look around but not act.
+    locked: boolean;
+    lockedMessage: string;
+};
+
+// For AMS staff: the free plan's agency limit (FreePlan::summary).
+export type FreePlanSummary = {
+    limit: number;
+    agencies: number;
+    locked: number;
+    reached: boolean;
+    contact: { name: string; whatsapp: string };
 };
 
 export type AdminQueue = {
