@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\UserRole;
+use App\Notifications\QueuedResetPassword;
+use App\Notifications\QueuedVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -74,5 +76,19 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function scopeAdmins(Builder $query): void
     {
         $query->where('role', UserRole::Admin);
+    }
+
+    /**
+     * Queued, like every portal email: a mistyped or dead address must not crash the sign-up
+     * that triggered it (the mail server refuses it later, in the queue, instead).
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new QueuedVerifyEmail);
+    }
+
+    public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
+    {
+        $this->notify(new QueuedResetPassword($token));
     }
 }

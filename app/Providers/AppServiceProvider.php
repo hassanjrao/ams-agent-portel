@@ -37,14 +37,7 @@ class AppServiceProvider extends ServiceProvider
             app()->isProduction(),
         );
 
-        Password::defaults(fn (): ?Password => app()->isProduction()
-            ? Password::min(12)
-                ->mixedCase()
-                ->letters()
-                ->numbers()
-                ->symbols()
-                ->uncompromised()
-            : null,
-        );
+        // AMS's choice: at least 6 characters, no other rules (no symbols, capitals or digits required).
+        Password::defaults(fn (): Password => Password::min(6));
     }
 }
