@@ -61,10 +61,14 @@ function submit() {
 <template>
     <Head title="Categories" />
 
-    <div class="flex max-w-3xl flex-col gap-4 p-4">
+    <div class="flex w-full max-w-3xl flex-col gap-5 p-4 md:p-6">
         <div class="flex items-center justify-between gap-3">
             <div>
-                <h1 class="text-xl font-semibold tracking-tight">Categories</h1>
+                <h1
+                    class="font-display text-2xl font-semibold sm:text-[1.7rem]"
+                >
+                    Categories
+                </h1>
                 <p class="text-sm text-muted-foreground">
                     The tabs agencies browse groups by, in this order.
                 </p>
@@ -72,11 +76,9 @@ function submit() {
             <Button @click="openForm()"><Plus /> Add category</Button>
         </div>
 
-        <div class="overflow-x-auto rounded-xl border">
-            <table class="w-full text-sm">
-                <thead
-                    class="bg-muted/50 text-left text-xs text-muted-foreground uppercase"
-                >
+        <div class="panel overflow-x-auto">
+            <table class="data-table">
+                <thead>
                     <tr>
                         <th class="px-4 py-3 font-medium">Order</th>
                         <th class="px-4 py-3 font-medium">Category</th>

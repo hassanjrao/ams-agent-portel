@@ -1,5 +1,6 @@
 import type { Directive } from 'vue';
 import type { Auth } from '@/types/auth';
+import type { AdminQueue, SharedAgency } from '@/types/portal';
 
 // Extend ImportMeta interface for Vite...
 declare module 'vite/client' {
@@ -20,6 +21,8 @@ declare module '@inertiajs/core' {
             name: string;
             auth: Auth;
             sidebarOpen: boolean;
+            myAgency: SharedAgency | null;
+            adminQueue: AdminQueue | null;
             [key: string]: unknown;
         };
     }

@@ -1,19 +1,36 @@
 <script setup lang="ts">
-import { usePage } from '@inertiajs/vue3';
-import AppLogoIcon from '@/components/AppLogoIcon.vue';
-
-const name = usePage().props.name;
+// The sidebar brand, as on the website footer: the full AMS logo on a white card.
+// Collapsed to icons, the sidebar shows the gold "A" monogram instead.
+withDefaults(defineProps<{ subtitle?: string }>(), {
+    subtitle: 'Agent portal',
+});
 </script>
 
 <template>
     <div
-        class="flex aspect-square size-8 items-center justify-center rounded-md bg-white ring-1 ring-sidebar-border"
+        class="flex w-full flex-col gap-2 group-data-[collapsible=icon]:hidden"
     >
-        <AppLogoIcon class="size-6" />
+        <div
+            class="rounded-xl bg-white px-3 py-2 shadow-sm ring-1 ring-black/5"
+        >
+            <img
+                src="/images/ams-logo.png"
+                alt="AMS Global Travel & Tours"
+                class="mx-auto h-11 w-auto"
+            />
+        </div>
+        <div class="flex items-center gap-2 px-1">
+            <span class="gold-rule h-px flex-1" />
+            <span
+                class="text-[10px] font-bold tracking-[0.22em] text-gold-light uppercase"
+                >{{ subtitle }}</span
+            >
+            <span class="gold-rule h-px flex-1 rotate-180" />
+        </div>
     </div>
-    <div class="ml-1 grid flex-1 text-left text-sm">
-        <span class="mb-0.5 truncate leading-tight font-semibold">{{
-            name
-        }}</span>
-    </div>
+    <img
+        src="/favicon.svg"
+        alt="AMS Global"
+        class="hidden size-8 rounded-lg group-data-[collapsible=icon]:block"
+    />
 </template>

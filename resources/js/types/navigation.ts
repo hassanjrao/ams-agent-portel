@@ -11,4 +11,8 @@ export type NavItem = {
     href: NonNullable<InertiaLinkProps['href']>;
     icon?: LucideIcon;
     isActive?: boolean;
+    // A count shown beside the item, e.g. payments waiting for review.
+    badge?: number;
+    // Lit only on this exact page, not its children (dashboards).
+    exact?: boolean;
 };

@@ -78,10 +78,12 @@ function submit() {
 <template>
     <Head title="Bank accounts" />
 
-    <div class="flex max-w-5xl flex-col gap-4 p-4">
+    <div class="flex w-full max-w-5xl flex-col gap-5 p-4 md:p-6">
         <div class="flex items-center justify-between gap-3">
             <div>
-                <h1 class="text-xl font-semibold tracking-tight">
+                <h1
+                    class="font-display text-2xl font-semibold sm:text-[1.7rem]"
+                >
                     Bank accounts
                 </h1>
                 <p class="text-sm text-muted-foreground">
@@ -91,11 +93,9 @@ function submit() {
             <Button @click="openForm()"><Plus /> Add account</Button>
         </div>
 
-        <div class="overflow-x-auto rounded-xl border">
-            <table class="w-full text-sm">
-                <thead
-                    class="bg-muted/50 text-left text-xs text-muted-foreground uppercase"
-                >
+        <div class="panel overflow-x-auto">
+            <table class="data-table">
+                <thead>
                     <tr>
                         <th class="px-4 py-3 font-medium">Bank</th>
                         <th class="px-4 py-3 font-medium">Account</th>

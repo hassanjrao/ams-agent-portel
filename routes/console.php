@@ -36,3 +36,6 @@ Artisan::command('bookings:expire-holds', function (BookingService $bookings) {
 // Seat counts already ignore a hold the moment it runs out; this just updates the status agents see.
 // On the server: a cron entry running `php artisan schedule:run` every minute.
 Schedule::command('bookings:expire-holds')->everyMinute()->withoutOverlapping();
+
+// Shared hosting has no long-running worker: the scheduler drains the queue (portal emails) each minute.
+Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=3')->everyMinute()->withoutOverlapping();

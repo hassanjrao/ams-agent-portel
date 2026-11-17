@@ -40,8 +40,15 @@ class AdminGroupsTest extends TestCase
     {
         $group = FlightGroup::factory()->create();
         $agency = Agency::factory()->create();
+        $booking = app(BookingService::class)->hold(User::factory()->agent($agency)->create(), $group, adults: 2);
 
-        foreach (['/admin', '/admin/groups', '/admin/groups/create', "/admin/groups/{$group->id}/edit", '/admin/agencies', "/admin/agencies/{$agency->id}", '/admin/airlines', '/admin/group-types', '/admin/bank-accounts'] as $url) {
+        foreach ([
+            '/admin', '/admin/groups', '/admin/groups/create', "/admin/groups/{$group->id}/edit",
+            '/admin/agencies', "/admin/agencies/{$agency->id}", "/admin/agencies/{$agency->id}/ledger",
+            '/admin/bookings', '/admin/bookings?status=on_hold', "/admin/bookings/{$booking->id}",
+            '/admin/payments', '/admin/payments?status=approved',
+            '/admin/airlines', '/admin/group-types', '/admin/bank-accounts',
+        ] as $url) {
             $this->actingAs($this->admin)->get($url)->assertOk();
         }
     }

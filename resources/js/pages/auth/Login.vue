@@ -15,14 +15,16 @@ import PasskeyVerify from '@/components/PasskeyVerify.vue';
 
 defineOptions({
     layout: {
-        title: 'Log in to your account',
-        description: 'Enter your email and password below to log in',
+        title: 'Agent login',
+        description:
+            'Sign in to hold seats, send payments and manage your bookings.',
     },
 });
 
 defineProps<{
     status?: string;
     canResetPassword: boolean;
+    canRegister: boolean;
 }>();
 </script>
 
@@ -102,9 +104,14 @@ defineProps<{
             </Button>
         </div>
 
-        <div class="text-center text-sm text-muted-foreground">
-            Don't have an account?
-            <TextLink :href="register()" :tabindex="5">Sign up</TextLink>
+        <div
+            v-if="canRegister"
+            class="rounded-xl border border-dashed bg-card px-4 py-3 text-center text-sm text-muted-foreground"
+        >
+            New travel agency?
+            <TextLink :href="register()" :tabindex="5" class="font-semibold"
+                >Register your agency</TextLink
+            >
         </div>
     </Form>
 </template>

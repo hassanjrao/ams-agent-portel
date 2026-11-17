@@ -81,10 +81,14 @@ function setStatus(group: GroupRow, status: GroupRow['status']) {
 <template>
     <Head title="Groups" />
 
-    <div class="flex flex-1 flex-col gap-4 p-4">
+    <div class="flex flex-1 flex-col gap-5 p-4 md:p-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-                <h1 class="text-xl font-semibold tracking-tight">Groups</h1>
+                <h1
+                    class="font-display text-2xl font-semibold sm:text-[1.7rem]"
+                >
+                    Groups
+                </h1>
                 <p class="text-sm text-muted-foreground">
                     Seat blocks AMS has bought, with what is sold and left.
                 </p>
@@ -131,11 +135,9 @@ function setStatus(group: GroupRow, status: GroupRow['status']) {
             </label>
         </div>
 
-        <div class="overflow-x-auto rounded-xl border">
-            <table class="w-full text-sm">
-                <thead
-                    class="bg-muted/50 text-left text-xs text-muted-foreground uppercase"
-                >
+        <div class="panel overflow-x-auto">
+            <table class="data-table">
+                <thead>
                     <tr>
                         <th class="px-4 py-3 font-medium">Departure</th>
                         <th class="px-4 py-3 font-medium">Route</th>

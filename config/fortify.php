@@ -161,7 +161,7 @@ return [
     */
 
     'features' => array_values(array_filter([
-        // Off on the live site until agency sign-up (with agency details) is built.
+        // Agency sign-up. New agencies wait for AMS approval before they can book; set false to close it.
         env('PORTAL_REGISTRATION_OPEN', true) ? Features::registration() : null,
         Features::resetPasswords(),
         Features::emailVerification(),

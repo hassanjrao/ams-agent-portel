@@ -135,9 +135,12 @@ function submit() {
 <template>
     <Head :title="editing ? 'Edit group' : 'New group'" />
 
-    <form class="flex max-w-5xl flex-col gap-8 p-4" @submit.prevent="submit">
+    <form
+        class="flex w-full max-w-5xl flex-col gap-8 p-4 md:p-6"
+        @submit.prevent="submit"
+    >
         <div>
-            <h1 class="text-xl font-semibold tracking-tight">
+            <h1 class="font-display text-2xl font-semibold sm:text-[1.7rem]">
                 {{ editing ? `Edit group ${group!.sector}` : 'New group' }}
             </h1>
             <p class="text-sm text-muted-foreground">
@@ -146,7 +149,7 @@ function submit() {
             </p>
         </div>
 
-        <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <section class="panel grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4">
             <div class="grid gap-2">
                 <Label for="group_type_id">Category</Label>
                 <NativeSelect id="group_type_id" v-model="form.group_type_id">
@@ -213,7 +216,7 @@ function submit() {
             <div
                 v-for="(leg, index) in form.legs"
                 :key="index"
-                class="grid gap-3 rounded-xl border p-4 sm:grid-cols-6 lg:grid-cols-12"
+                class="panel grid gap-3 p-4 sm:grid-cols-6 lg:grid-cols-12"
             >
                 <div class="grid gap-1.5 sm:col-span-2">
                     <Label :for="`flight-${index}`">Flight</Label>

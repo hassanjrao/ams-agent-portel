@@ -11,8 +11,8 @@ class ExampleTest extends TestCase
 
     public function test_returns_a_successful_response()
     {
-        $response = $this->get(route('home'));
-
-        $response->assertOk();
+        // The portal has no public home page: the address goes to the dashboard (or login).
+        $this->get(route('home'))->assertRedirect('/dashboard');
+        $this->get('/dashboard')->assertRedirect(route('login'));
     }
 }

@@ -20,4 +20,10 @@ enum BookingStatus: string
     {
         return [self::OnHold, self::Confirmed];
     }
+
+    // "on hold", for messages.
+    public function label(): string
+    {
+        return str_replace('_', ' ', $this->value);
+    }
 }

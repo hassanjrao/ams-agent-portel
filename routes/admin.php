@@ -3,9 +3,11 @@
 use App\Http\Controllers\Admin\AgencyController;
 use App\Http\Controllers\Admin\AirlineController;
 use App\Http\Controllers\Admin\BankAccountController;
+use App\Http\Controllers\Admin\BookingController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FlightGroupController;
 use App\Http\Controllers\Admin\GroupTypeController;
+use App\Http\Controllers\Admin\PaymentController;
 use Illuminate\Support\Facades\Route;
 
 // AMS staff only.
@@ -19,9 +21,21 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::put('groups/{flightGroup}', [FlightGroupController::class, 'update'])->name('groups.update');
     Route::patch('groups/{flightGroup}/status', [FlightGroupController::class, 'updateStatus'])->name('groups.status');
 
+    Route::get('bookings', [BookingController::class, 'index'])->name('bookings.index');
+    Route::get('bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
+    Route::post('bookings/{booking}/confirm', [BookingController::class, 'confirm'])->name('bookings.confirm');
+    Route::post('bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
+    Route::put('bookings/{booking}/passengers', [BookingController::class, 'updatePassengers'])->name('bookings.passengers');
+
+    Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
+    Route::post('payments/{payment}/approve', [PaymentController::class, 'approve'])->name('payments.approve');
+    Route::post('payments/{payment}/reject', [PaymentController::class, 'reject'])->name('payments.reject');
+
     Route::get('agencies', [AgencyController::class, 'index'])->name('agencies.index');
     Route::get('agencies/{agency}', [AgencyController::class, 'show'])->name('agencies.show');
     Route::patch('agencies/{agency}/status', [AgencyController::class, 'updateStatus'])->name('agencies.status');
+    Route::get('agencies/{agency}/ledger', [AgencyController::class, 'ledger'])->name('agencies.ledger');
+    Route::post('agencies/{agency}/adjustments', [AgencyController::class, 'adjust'])->name('agencies.adjust');
 
     Route::get('airlines', [AirlineController::class, 'index'])->name('airlines.index');
     Route::post('airlines', [AirlineController::class, 'store'])->name('airlines.store');

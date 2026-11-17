@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\AgencyStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StatementRequest;
 use App\Models\Agency;
 use App\Models\Booking;
 use App\Services\AgencyService;
+use App\Services\LedgerService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -93,6 +95,44 @@ class AgencyController extends Controller
         $this->agencies->setStatus($agency, AgencyStatus::from($data['status']), $request->user(), $data['admin_notes'] ?? $agency->admin_notes);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => $agency->status === AgencyStatus::Active ? "{$agency->name} can now book." : "{$agency->name} is suspended."]);
+
+        return back();
+    }
+
+    /**
+     * The agency's statement, as the agency sees it, with AMS's manual adjustments.
+     */
+    public function ledger(StatementRequest $request, Agency $agency, LedgerService $ledger): Response
+    {
+        [$from, $to] = $request->range();
+
+        return Inertia::render('admin/agencies/Ledger', [
+            'agency' => [...$agency->only(['id', 'name', 'city']), 'status' => $agency->status->value],
+            'statement' => $ledger->statement($agency, $from, $to),
+            'filters' => ['from' => $from->toDateString(), 'to' => $to->toDateString()],
+        ]);
+    }
+
+    /**
+     * A manual correction: an airline penalty or service charge (charge), or a discount or
+     * write-off (credit). Entries are never edited; a mistake is undone with the opposite entry.
+     */
+    public function adjust(Request $request, Agency $agency, LedgerService $ledger): RedirectResponse
+    {
+        $data = $request->validate([
+            'direction' => ['required', Rule::in(['charge', 'credit'])],
+            'amount' => ['required', 'integer', 'min:1', 'max:100000000'],
+            'description' => ['required', 'string', 'max:200'],
+        ]);
+
+        $ledger->adjust(
+            $agency,
+            $data['direction'] === 'charge' ? (int) $data['amount'] : -(int) $data['amount'],
+            $data['description'],
+            $request->user(),
+        );
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Adjustment posted to '.$agency->name.'.']);
 
         return back();
     }

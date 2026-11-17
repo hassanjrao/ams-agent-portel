@@ -2,15 +2,19 @@
 
 namespace Database\Seeders;
 
+use App\Enums\PaymentStatus;
 use App\Models\Agency;
 use App\Models\Airline;
 use App\Models\BankAccount;
 use App\Models\FlightGroup;
 use App\Models\GroupType;
+use App\Models\Payment;
 use App\Models\User;
 use App\Services\BookingService;
 use App\Services\FlightGroupService;
+use App\Services\PaymentService;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Local-only sample data: an admin, two agencies (one waiting for approval) and a few groups.
@@ -60,8 +64,33 @@ class DemoSeeder extends Seeder
             ], $legs, $admin);
         }
 
-        $confirmed = $bookings->hold($agent, $made[0], adults: 4);
+        $names = fn (array $people) => array_map(fn (array $p) => [
+            'type' => $p[0], 'title' => $p[1], 'given_name' => $p[2], 'surname' => $p[3], 'passport_number' => $p[4] ?? null,
+        ], $people);
+
+        $confirmed = $bookings->hold($agent, $made[0], adults: 4, passengers: $names([
+            ['adult', 'MR', 'Muhammad Asif', 'Khan', 'AB1234561'], ['adult', 'MRS', 'Nasreen', 'Bibi', 'AB1234562'],
+            ['adult', 'MR', 'Abdul Rehman', 'Malik', 'AB1234563'], ['adult', 'MRS', 'Shazia', 'Malik', 'AB1234564'],
+        ]));
         $bookings->confirm($confirmed, $admin, 'DEMO01');
-        $bookings->hold($agent, $made[1], adults: 2, children: 1);
+
+        $held = $bookings->hold($agent, $made[1], adults: 2, children: 1, passengers: $names([
+            ['adult', 'MR', 'Imran', 'Qureshi', 'CD7654321'], ['adult', 'MRS', 'Sana', 'Qureshi'], ['child', 'MSTR', 'Ahmed', 'Qureshi'],
+        ]));
+
+        // A transfer waiting for AMS to check, with a stand-in receipt.
+        Storage::disk(PaymentService::RECEIPT_DISK)->put("receipts/{$agency->id}/demo-receipt.svg", '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="600" height="400" fill="#fbf7ef"/><text x="40" y="80" font-family="Arial" font-size="28" fill="#1d150b">Sample Bank · Funds transfer</text><text x="40" y="150" font-family="Arial" font-size="40" font-weight="bold" fill="#93661a">PKR 490,000</text><text x="40" y="210" font-family="Arial" font-size="20" fill="#5b4a36">To: AMS Global Travel &amp; Tours</text></svg>');
+        $payment = new Payment([
+            'bank_account_id' => BankAccount::query()->value('id'),
+            'booking_id' => $held->id,
+            'amount' => $held->total_amount,
+            'paid_on' => today()->toDateString(),
+            'description' => 'IBFT ref 482913',
+            'receipt_path' => "receipts/{$agency->id}/demo-receipt.svg",
+        ]);
+        $payment->agency_id = $agency->id;
+        $payment->user_id = $agent->id;
+        $payment->status = PaymentStatus::Pending;
+        $payment->save();
     }
 }

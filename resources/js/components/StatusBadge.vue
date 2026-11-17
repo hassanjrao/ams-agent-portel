@@ -32,8 +32,9 @@ const tone = computed(() => tones[props.status] ?? tones.draft);
 <template>
     <span
         :class="tone"
-        class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap"
+        class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap"
     >
+        <span class="size-1.5 rounded-full bg-current opacity-70" />
         {{ titleCase(status) }}
     </span>
 </template>

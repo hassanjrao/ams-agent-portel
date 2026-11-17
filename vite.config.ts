@@ -12,8 +12,12 @@ export default defineConfig({
             input: ['resources/css/app.css', 'resources/js/app.ts'],
             refresh: true,
             fonts: [
-                bunny('Instrument Sans', {
-                    weights: [400, 500, 600],
+                // The website's fonts: Manrope for text, Playfair Display for headings.
+                bunny('Manrope', {
+                    weights: [400, 500, 600, 700, 800],
+                }),
+                bunny('Playfair Display', {
+                    weights: [600, 700],
                 }),
             ],
         }),

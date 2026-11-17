@@ -2,6 +2,12 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\AgencyStatus;
+use App\Enums\BookingStatus;
+use App\Enums\PaymentStatus;
+use App\Models\Agency;
+use App\Models\Booking;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -35,12 +41,32 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user,
             ],
+            // The logged-in agency's standing, shown in the header on every page. Named so it can't
+            // be shadowed by a page's own "agency" prop (AMS's agency pages have one).
+            'myAgency' => fn () => $user && ! $user->isAdmin() && $user->agency
+                ? [
+                    'id' => $user->agency->id,
+                    'name' => $user->agency->name,
+                    'status' => $user->agency->status->value,
+                    'balance' => $user->agency->balance(),
+                ]
+                : null,
+            // What is waiting for AMS, as badges in the admin sidebar.
+            'adminQueue' => fn () => $user?->isAdmin()
+                ? [
+                    'payments' => Payment::query()->where('status', PaymentStatus::Pending)->count(),
+                    'agencies' => Agency::query()->where('status', AgencyStatus::Pending)->count(),
+                    'holds' => Booking::query()->where('status', BookingStatus::OnHold)->where('hold_expires_at', '>', now())->count(),
+                ]
+                : null,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

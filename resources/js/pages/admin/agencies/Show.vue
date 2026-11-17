@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
-import { CheckCircle2, Ban } from '@lucide/vue';
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Ban, CheckCircle2, Landmark } from '@lucide/vue';
 import InputError from '@/components/InputError.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { formatDate, formatPKR } from '@/lib/format';
+import { balanceLabel, formatDate, formatPKR } from '@/lib/format';
 import admin from '@/routes/admin';
 
 type Agency = {
@@ -59,11 +59,13 @@ function setStatus(status: 'active' | 'suspended') {
 <template>
     <Head :title="agency.name" />
 
-    <div class="flex max-w-5xl flex-col gap-6 p-4">
+    <div class="flex w-full max-w-5xl flex-col gap-6 p-4 md:p-6">
         <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
                 <div class="flex items-center gap-3">
-                    <h1 class="text-xl font-semibold tracking-tight">
+                    <h1
+                        class="font-display text-2xl font-semibold sm:text-[1.7rem]"
+                    >
                         {{ agency.name }}
                     </h1>
                     <StatusBadge :status="agency.status" />
@@ -95,7 +97,7 @@ function setStatus(status: 'active' | 'suspended') {
         </div>
 
         <div class="grid gap-4 md:grid-cols-3">
-            <div class="rounded-xl border p-5 md:col-span-2">
+            <div class="panel p-5 md:col-span-2">
                 <h2 class="mb-3 font-medium">Details</h2>
                 <dl class="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
                     <div>
@@ -126,14 +128,23 @@ function setStatus(status: 'active' | 'suspended') {
                     </div>
                 </dl>
             </div>
-            <div class="rounded-xl border p-5">
-                <h2 class="text-sm text-muted-foreground">Balance owed</h2>
-                <p class="mt-2 text-2xl font-semibold tabular-nums">
-                    {{ formatPKR(agency.balance) }}
+            <div
+                class="panel flex flex-col border-gold/40 bg-gradient-to-br from-card to-sand/60 p-5 dark:to-secondary"
+            >
+                <h2 class="text-sm text-muted-foreground">
+                    {{ balanceLabel(agency.balance) }}
+                </h2>
+                <p class="mt-2 text-2xl font-extrabold tabular-nums">
+                    {{ formatPKR(Math.abs(agency.balance)) }}
                 </p>
                 <p class="mt-1 text-xs text-muted-foreground">
-                    Confirmed bookings minus approved payments.
+                    Confirmed bookings minus approved payments and refunds.
                 </p>
+                <Button as-child variant="outline" size="sm" class="mt-4 w-fit">
+                    <Link :href="admin.agencies.ledger(agency.id)"
+                        ><Landmark /> Statement &amp; adjustments</Link
+                    >
+                </Button>
             </div>
         </div>
 
@@ -150,7 +161,7 @@ function setStatus(status: 'active' | 'suspended') {
             <InputError :message="form.errors.admin_notes" />
         </div>
 
-        <div class="rounded-xl border">
+        <div class="panel overflow-hidden">
             <h2 class="border-b px-4 py-3 font-medium">Staff logins</h2>
             <ul class="divide-y text-sm">
                 <li
@@ -169,13 +180,26 @@ function setStatus(status: 'active' | 'suspended') {
             </ul>
         </div>
 
-        <div class="overflow-x-auto rounded-xl border">
-            <h2 class="border-b px-4 py-3 font-medium">Recent bookings</h2>
-            <table class="w-full text-sm">
+        <div class="panel overflow-x-auto">
+            <div class="flex items-center justify-between border-b px-4 py-3">
+                <h2 class="font-semibold">Recent bookings</h2>
+                <Link
+                    :href="
+                        admin.bookings.index({ query: { search: agency.name } })
+                    "
+                    class="text-sm font-semibold text-highlight hover:underline"
+                    >All bookings</Link
+                >
+            </div>
+            <table class="data-table">
                 <tbody class="divide-y">
                     <tr v-for="booking in recentBookings" :key="booking.id">
                         <td class="px-4 py-3 font-mono text-xs">
-                            {{ booking.reference }}
+                            <Link
+                                :href="admin.bookings.show(booking.id)"
+                                class="font-bold hover:text-highlight"
+                                >{{ booking.reference }}</Link
+                            >
                         </td>
                         <td class="px-4 py-3">
                             {{ booking.sector }} ·
