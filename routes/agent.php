@@ -9,7 +9,7 @@ use App\Http\Controllers\ReceiptController;
 use Illuminate\Support\Facades\Route;
 
 // Travel agencies. Admins who land here are sent to the admin dashboard.
-Route::middleware(['auth', 'verified', 'agent'])->group(function () {
+Route::middleware(['auth', 'agent'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
 
     Route::get('groups', [GroupController::class, 'index'])->name('groups.index');
@@ -28,4 +28,4 @@ Route::middleware(['auth', 'verified', 'agent'])->group(function () {
 });
 
 // A payment's receipt, for the agency that sent it and for AMS staff.
-Route::middleware(['auth', 'verified'])->get('payments/{payment}/receipt', ReceiptController::class)->name('payments.receipt');
+Route::middleware(['auth'])->get('payments/{payment}/receipt', ReceiptController::class)->name('payments.receipt');

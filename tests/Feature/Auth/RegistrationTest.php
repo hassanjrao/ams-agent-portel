@@ -6,8 +6,6 @@ use App\Enums\AgencyStatus;
 use App\Enums\UserRole;
 use App\Models\User;
 use App\Notifications\NewAgencyRegistered;
-use App\Notifications\QueuedVerifyEmail;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Laravel\Fortify\Features;
@@ -76,7 +74,7 @@ class RegistrationTest extends TestCase
         $this->assertAuthenticated();
     }
 
-    public function test_the_verification_email_is_queued_so_a_bad_address_cannot_break_sign_up()
+    public function test_a_new_agency_goes_straight_to_its_dashboard_without_verifying_email()
     {
         Notification::fake();
 
@@ -86,9 +84,11 @@ class RegistrationTest extends TestCase
             'password' => 'secret', 'password_confirmation' => 'secret',
         ])->assertRedirect(route('dashboard', absolute: false));
 
+        // No verification email, and the unverified login opens the portal.
         $user = User::query()->where('email', 'nobody@m.com')->firstOrFail();
-        Notification::assertSentTo($user, QueuedVerifyEmail::class);
-        $this->assertInstanceOf(ShouldQueue::class, new QueuedVerifyEmail);
+        Notification::assertNothingSentTo($user);
+        $this->actingAs($user)->get('/dashboard')->assertOk();
+        $this->actingAs($user)->get('/groups')->assertOk();
     }
 
     public function test_sign_up_needs_the_agency_details()

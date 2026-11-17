@@ -164,7 +164,7 @@ return [
         // Agency sign-up. New agencies wait for AMS approval before they can book; set false to close it.
         env('PORTAL_REGISTRATION_OPEN', true) ? Features::registration() : null,
         Features::resetPasswords(),
-        Features::emailVerification(),
+        // No email verification: AMS approving the agency is the check that matters.
         Features::twoFactorAuthentication([
             'confirm' => true,
             'confirmPassword' => true,

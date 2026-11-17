@@ -4,9 +4,7 @@ namespace App\Models;
 
 use App\Enums\UserRole;
 use App\Notifications\QueuedResetPassword;
-use App\Notifications\QueuedVerifyEmail;
 use Database\Factories\UserFactory;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Builder;
@@ -37,7 +35,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  */
 #[Fillable(['name', 'email', 'password', 'phone'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
-class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
+// Not MustVerifyEmail: logins work straight after sign-up; AMS approval gates booking instead.
+class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
@@ -79,14 +78,9 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
-     * Queued, like every portal email: a mistyped or dead address must not crash the sign-up
+     * Queued, like every portal email: a mistyped or dead address must not crash the form
      * that triggered it (the mail server refuses it later, in the queue, instead).
      */
-    public function sendEmailVerificationNotification(): void
-    {
-        $this->notify(new QueuedVerifyEmail);
-    }
-
     public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
     {
         $this->notify(new QueuedResetPassword($token));

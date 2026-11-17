@@ -6,6 +6,7 @@ use App\Enums\BookingStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PassengersRequest;
 use App\Models\Booking;
+use App\Models\FlightGroup;
 use App\Presenters\BookingPresenter;
 use App\Services\BookingService;
 use Illuminate\Database\Eloquent\Builder;
@@ -48,9 +49,16 @@ class BookingController extends Controller
             ->paginate(25)
             ->withQueryString();
 
+        $group = isset($filters['group']) ? FlightGroup::query()->find($filters['group']) : null;
+
         return Inertia::render('admin/bookings/Index', [
             'bookings' => $bookings->through(fn (Booking $b) => BookingPresenter::row($b)),
             'filters' => $filters,
+            'group' => $group ? [
+                'id' => $group->id,
+                'sector' => $group->sector,
+                'departure_date' => $group->departure_date->toDateString(),
+            ] : null,
         ]);
     }
 

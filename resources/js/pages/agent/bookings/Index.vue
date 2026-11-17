@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { BookOpenText, Search } from '@lucide/vue';
-import { reactive, watch } from 'vue';
+import { BookOpenText, Eye, ReceiptText, Search, XCircle } from '@lucide/vue';
+import { computed, reactive, ref, watch } from 'vue';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import HoldCountdown from '@/components/HoldCountdown.vue';
 import PageHeader from '@/components/PageHeader.vue';
@@ -12,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { formatDate, formatPKR, paxSummary } from '@/lib/format';
 import bookings from '@/routes/bookings';
 import groups from '@/routes/groups';
+import payments from '@/routes/payments';
 import type { BookingRow, Paginated } from '@/types/portal';
 
 const props = defineProps<{
@@ -52,6 +54,37 @@ watch(filters, () => {
         );
     }, 300);
 });
+
+// Releasing a running hold from the list, after a confirmation.
+const releasing = ref<BookingRow | null>(null);
+const processing = ref(false);
+const error = ref<string>();
+const releaseOpen = computed({
+    get: () => releasing.value !== null,
+    set: (value) => {
+        if (!value) {
+            releasing.value = null;
+            error.value = undefined;
+        }
+    },
+});
+
+function release() {
+    if (!releasing.value) {
+        return;
+    }
+    router.post(
+        bookings.cancel.url(releasing.value.id),
+        {},
+        {
+            preserveScroll: true,
+            onStart: () => (processing.value = true),
+            onFinish: () => (processing.value = false),
+            onSuccess: () => (releasing.value = null),
+            onError: (errors) => (error.value = Object.values(errors)[0]),
+        },
+    );
+}
 </script>
 
 <template>
@@ -108,6 +141,7 @@ watch(filters, () => {
                         <th>Passengers</th>
                         <th class="text-right">Total</th>
                         <th>Status</th>
+                        <th class="text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -160,6 +194,38 @@ watch(filters, () => {
                                 />
                             </div>
                         </td>
+                        <td @click.stop>
+                            <div class="flex items-center justify-end gap-1.5">
+                                <!-- Paying opens the payment form on this booking. -->
+                                <Button
+                                    v-if="booking.status === 'on_hold'"
+                                    size="sm"
+                                    as-child
+                                >
+                                    <Link
+                                        :href="
+                                            payments.index({
+                                                query: { booking: booking.id },
+                                            })
+                                        "
+                                        ><ReceiptText /> Pay</Link
+                                    >
+                                </Button>
+                                <Button
+                                    v-if="booking.seconds_left !== null"
+                                    size="sm"
+                                    variant="outline"
+                                    class="text-destructive hover:text-destructive"
+                                    @click="releasing = booking"
+                                    ><XCircle /> Release</Button
+                                >
+                                <Button size="sm" variant="outline" as-child>
+                                    <Link :href="bookings.show(booking.id)"
+                                        ><Eye /> View</Link
+                                    >
+                                </Button>
+                            </div>
+                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -180,6 +246,17 @@ watch(filters, () => {
             :from="props.bookings.from"
             :to="props.bookings.to"
             :total="props.bookings.total"
+        />
+
+        <ConfirmDialog
+            v-model:open="releaseOpen"
+            :title="`Release ${releasing?.reference ?? ''}?`"
+            description="The booking is cancelled and its seats go back on sale. This can't be undone."
+            confirm-label="Release seats"
+            destructive
+            :processing="processing"
+            :error="error"
+            @confirm="release"
         />
     </div>
 </template>

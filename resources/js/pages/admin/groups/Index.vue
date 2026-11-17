@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Pencil, Plus, Search } from '@lucide/vue';
-import { reactive, watch } from 'vue';
+import { Ban, Pencil, Plus, Search, Send, Ticket } from '@lucide/vue';
+import { computed, reactive, ref, watch } from 'vue';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import NativeSelect from '@/components/NativeSelect.vue';
 import Pagination from '@/components/Pagination.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
@@ -73,9 +74,20 @@ function setStatus(group: GroupRow, status: GroupRow['status']) {
     router.patch(
         admin.groups.status.url(group.id),
         { status },
-        { preserveScroll: true },
+        { preserveScroll: true, onSuccess: () => (closing.value = null) },
     );
 }
+
+// Closing stops sales, so it asks first; publishing is one click.
+const closing = ref<GroupRow | null>(null);
+const closeOpen = computed({
+    get: () => closing.value !== null,
+    set: (value) => {
+        if (!value) {
+            closing.value = null;
+        }
+    },
+});
 </script>
 
 <template>
@@ -146,7 +158,7 @@ function setStatus(group: GroupRow, status: GroupRow['status']) {
                             Adult fare
                         </th>
                         <th class="px-4 py-3 font-medium">Status</th>
-                        <th class="px-4 py-3"></th>
+                        <th class="px-4 py-3 text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y">
@@ -188,27 +200,37 @@ function setStatus(group: GroupRow, status: GroupRow['status']) {
                             <StatusBadge :status="group.status" />
                         </td>
                         <td class="px-4 py-3">
-                            <div class="flex justify-end gap-1">
+                            <div class="flex items-center justify-end gap-1.5">
                                 <Button
                                     v-if="group.status !== 'published'"
                                     size="sm"
-                                    variant="outline"
                                     @click="setStatus(group, 'published')"
-                                    >Publish</Button
+                                    ><Send /> Publish</Button
                                 >
                                 <Button
                                     v-else
                                     size="sm"
                                     variant="outline"
-                                    @click="setStatus(group, 'closed')"
-                                    >Close</Button
+                                    class="text-destructive hover:text-destructive"
+                                    @click="closing = group"
+                                    ><Ban /> Close</Button
                                 >
-                                <Button size="icon-sm" variant="ghost" as-child>
+                                <Button size="sm" variant="outline" as-child>
+                                    <Link
+                                        :href="
+                                            admin.bookings.index({
+                                                query: { group: group.id },
+                                            })
+                                        "
+                                        ><Ticket /> Bookings</Link
+                                    >
+                                </Button>
+                                <Button size="sm" variant="ghost" as-child>
                                     <Link
                                         :href="admin.groups.edit(group.id)"
                                         aria-label="Edit group"
-                                        ><Pencil
-                                    /></Link>
+                                        ><Pencil /> Edit</Link
+                                    >
                                 </Button>
                             </div>
                         </td>
@@ -230,6 +252,15 @@ function setStatus(group: GroupRow, status: GroupRow['status']) {
             :from="groups.from"
             :to="groups.to"
             :total="groups.total"
+        />
+
+        <ConfirmDialog
+            v-model:open="closeOpen"
+            :title="`Close ${closing?.sector ?? ''} sales?`"
+            description="Agencies can no longer book this group. Existing bookings stay as they are; you can publish it again later."
+            confirm-label="Close sales"
+            destructive
+            @confirm="closing && setStatus(closing, 'closed')"
         />
     </div>
 </template>

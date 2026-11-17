@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Search, Ticket } from '@lucide/vue';
-import { reactive, watch } from 'vue';
+import { CircleCheck, Eye, Search, Ticket, X, XCircle } from '@lucide/vue';
+import { computed, reactive, ref, watch } from 'vue';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import HoldCountdown from '@/components/HoldCountdown.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import Pagination from '@/components/Pagination.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
     formatDate,
@@ -20,6 +22,8 @@ import type { BookingRow, Paginated } from '@/types/portal';
 const props = defineProps<{
     bookings: Paginated<BookingRow>;
     filters: { status?: string; search?: string; group?: string };
+    // The group being looked at, when opened from a group's "Bookings" button.
+    group: { id: number; sector: string; departure_date: string } | null;
 }>();
 
 defineOptions({
@@ -56,6 +60,51 @@ watch(filters, () => {
         );
     }, 300);
 });
+
+// Quick confirm / cancel from the list; the server re-checks every rule.
+const canConfirm = (b: BookingRow) =>
+    b.status === 'on_hold' || b.status === 'expired';
+const canCancel = (b: BookingRow) =>
+    b.status === 'on_hold' || b.status === 'confirmed';
+
+const action = ref<{ booking: BookingRow; kind: 'confirm' | 'cancel' } | null>(
+    null,
+);
+const processing = ref(false);
+const error = ref<string>();
+const open = computed({
+    get: () => action.value !== null,
+    set: (value) => {
+        if (!value) {
+            action.value = null;
+        }
+    },
+});
+
+function ask(booking: BookingRow, kind: 'confirm' | 'cancel') {
+    error.value = undefined;
+    action.value = { booking, kind };
+}
+
+function apply(value: string) {
+    if (!action.value) {
+        return;
+    }
+    const { booking, kind } = action.value;
+    router.post(
+        kind === 'confirm'
+            ? admin.bookings.confirm.url(booking.id)
+            : admin.bookings.cancel.url(booking.id),
+        kind === 'confirm' ? { pnr: value || null } : { reason: value },
+        {
+            preserveScroll: true,
+            onStart: () => (processing.value = true),
+            onFinish: () => (processing.value = false),
+            onSuccess: () => (action.value = null),
+            onError: (errors) => (error.value = Object.values(errors)[0]),
+        },
+    );
+}
 </script>
 
 <template>
@@ -99,6 +148,23 @@ watch(filters, () => {
             </div>
         </div>
 
+        <div
+            v-if="group"
+            class="flex w-fit items-center gap-2 rounded-full border border-gold/40 bg-sand/60 py-1 pr-1 pl-3.5 text-sm dark:bg-secondary"
+        >
+            <span
+                >Group <strong>{{ group.sector }}</strong> ·
+                {{ formatDate(group.departure_date) }}</span
+            >
+            <Button size="icon-sm" variant="ghost" as-child>
+                <Link
+                    :href="admin.bookings.index()"
+                    aria-label="Show all bookings"
+                    ><X
+                /></Link>
+            </Button>
+        </div>
+
         <div class="panel overflow-x-auto">
             <table class="data-table">
                 <thead>
@@ -109,6 +175,7 @@ watch(filters, () => {
                         <th>Passengers</th>
                         <th class="text-right">Total</th>
                         <th>Status</th>
+                        <th class="text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -171,6 +238,30 @@ watch(filters, () => {
                                 >
                             </div>
                         </td>
+                        <td @click.stop>
+                            <div class="flex items-center justify-end gap-1.5">
+                                <Button
+                                    v-if="canConfirm(booking)"
+                                    size="sm"
+                                    @click="ask(booking, 'confirm')"
+                                    ><CircleCheck /> Confirm</Button
+                                >
+                                <Button
+                                    v-if="canCancel(booking)"
+                                    size="sm"
+                                    variant="outline"
+                                    class="text-destructive hover:text-destructive"
+                                    @click="ask(booking, 'cancel')"
+                                    ><XCircle /> Cancel</Button
+                                >
+                                <Button size="sm" variant="outline" as-child>
+                                    <Link
+                                        :href="admin.bookings.show(booking.id)"
+                                        ><Eye /> View</Link
+                                    >
+                                </Button>
+                            </div>
+                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -186,6 +277,41 @@ watch(filters, () => {
             :from="props.bookings.from"
             :to="props.bookings.to"
             :total="props.bookings.total"
+        />
+
+        <ConfirmDialog
+            v-model:open="open"
+            :title="
+                action?.kind === 'confirm'
+                    ? `Confirm ${action.booking.reference}?`
+                    : `Cancel ${action?.booking.reference ?? ''}?`
+            "
+            :description="
+                action?.kind === 'confirm'
+                    ? `${formatPKR(action.booking.total_amount)} is charged to ${action.booking.agency?.name}'s statement and the agency is emailed.`
+                    : action?.booking.status === 'confirmed'
+                      ? 'The seats go back on sale, the amount is credited back to the agency, and it is emailed the reason.'
+                      : 'The seats go back on sale and the agency is emailed the reason.'
+            "
+            :confirm-label="
+                action?.kind === 'confirm'
+                    ? 'Confirm & charge'
+                    : 'Cancel booking'
+            "
+            :destructive="action?.kind === 'cancel'"
+            :input-label="
+                action?.kind === 'confirm' ? 'PNR (optional)' : 'Reason'
+            "
+            :input-placeholder="
+                action?.kind === 'confirm'
+                    ? 'e.g. 6XK2LP'
+                    : 'e.g. Not paid, agency asked to cancel'
+            "
+            :input-required="action?.kind === 'cancel'"
+            :initial-value="action?.booking.pnr ?? ''"
+            :processing="processing"
+            :error="error"
+            @confirm="apply"
         />
     </div>
 </template>
