@@ -32,8 +32,9 @@
 
         <meta name="theme-color" content="#15100a">
         <meta name="robots" content="noindex">
+        {{-- The AMS logo, the same icon as amsglobal.pk. --}}
         <link rel="icon" href="/favicon.ico" sizes="any">
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+        <link rel="icon" href="/icon.png" type="image/png" sizes="512x512">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
         {{-- Link previews (WhatsApp, Facebook, X): crawlers read these, they don't run the app. --}}

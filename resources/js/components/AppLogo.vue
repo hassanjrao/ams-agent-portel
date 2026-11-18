@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // The sidebar brand, as on the website footer: the full AMS logo on a white card.
-// Collapsed to icons, the sidebar shows the gold "A" monogram instead.
+// Collapsed to icons, the sidebar shows the square logo icon (the favicon) instead.
 withDefaults(defineProps<{ subtitle?: string }>(), {
     subtitle: 'Agent portal',
 });
@@ -29,8 +29,8 @@ withDefaults(defineProps<{ subtitle?: string }>(), {
         </div>
     </div>
     <img
-        src="/favicon.svg"
+        src="/icon.png"
         alt="AMS Global"
-        class="hidden size-8 rounded-lg group-data-[collapsible=icon]:block"
+        class="hidden size-8 rounded-lg bg-white group-data-[collapsible=icon]:block"
     />
 </template>
