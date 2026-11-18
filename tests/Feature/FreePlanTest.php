@@ -18,7 +18,7 @@ use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
 /**
- * Only the first agencies to sign up (5 by default) may act; later ones can look but not act.
+ * Only the first agencies to sign up (50 by default; 5 here to keep the test small) may act; later ones can look but not act.
  */
 class FreePlanTest extends TestCase
 {

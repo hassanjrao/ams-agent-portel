@@ -42,7 +42,7 @@ return [
     |
     */
 
-    'free_agency_limit' => (int) env('PORTAL_FREE_AGENCY_LIMIT', 5),
+    'free_agency_limit' => (int) env('PORTAL_FREE_AGENCY_LIMIT', 50),
 
     // Who to contact to lift the limit, shown to AMS staff in the "limit reached" notice.
     'upgrade_contact' => [
