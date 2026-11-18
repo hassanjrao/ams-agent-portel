@@ -20,6 +20,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('groups/{flightGroup}/edit', [FlightGroupController::class, 'edit'])->name('groups.edit');
     Route::put('groups/{flightGroup}', [FlightGroupController::class, 'update'])->name('groups.update');
     Route::patch('groups/{flightGroup}/status', [FlightGroupController::class, 'updateStatus'])->name('groups.status');
+    Route::patch('groups/{flightGroup}/hold-minutes', [FlightGroupController::class, 'updateHoldMinutes'])->name('groups.hold-minutes');
 
     Route::get('bookings', [BookingController::class, 'index'])->name('bookings.index');
     Route::get('bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');

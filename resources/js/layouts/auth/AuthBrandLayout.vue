@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { BadgeCheck, Clock, Wallet } from '@lucide/vue';
+import DeveloperCredit from '@/components/DeveloperCredit.vue';
 
 // Sign-in and sign-up in the website's style: a Haram night photo with the logo and what the
 // portal offers on one side, the form on a cream card on the other.
@@ -106,6 +107,7 @@ const points = [
                         >amsglobal.pk</a
                     >
                 </p>
+                <DeveloperCredit class="mt-1.5 text-center" />
             </div>
         </main>
     </div>

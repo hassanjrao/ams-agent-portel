@@ -61,10 +61,12 @@ class FlightGroupController extends Controller
                 'seats_held' => (int) $g->seats_taken - (int) $g->seats_confirmed,
                 'seats_available' => $g->seatsAvailable(),
                 'adult_fare' => $g->adult_fare,
+                'hold_minutes' => $g->holdMinutes(),
                 'status' => $g->status->value,
             ]),
             'filters' => $filters,
             'groupTypes' => GroupType::query()->orderBy('sort_order')->get(['id', 'name']),
+            'defaultHoldMinutes' => config('portal.hold_minutes'),
         ]);
     }
 
@@ -129,6 +131,26 @@ class FlightGroupController extends Controller
         $flightGroup->save();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "Group is now {$flightGroup->status->value}."]);
+
+        return back();
+    }
+
+    /**
+     * The payment window from the groups list. It applies to holds placed from now on: a hold
+     * already running keeps the deadline it was given.
+     */
+    public function updateHoldMinutes(Request $request, FlightGroup $flightGroup): RedirectResponse
+    {
+        $data = $request->validate(
+            ['hold_minutes' => ['required', 'integer', 'min:'.FlightGroup::MIN_HOLD_MINUTES, 'max:'.FlightGroup::MAX_HOLD_MINUTES]],
+            [],
+            ['hold_minutes' => 'payment window'],
+        );
+
+        $flightGroup->hold_minutes = $data['hold_minutes'];
+        $flightGroup->save();
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => "{$flightGroup->sector}: agencies now have {$flightGroup->hold_minutes} minutes to pay."]);
 
         return back();
     }

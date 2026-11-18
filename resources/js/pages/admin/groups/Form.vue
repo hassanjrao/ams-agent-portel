@@ -76,7 +76,8 @@ const form = useForm({
     child_fare: props.group?.child_fare ?? '',
     infant_fare: props.group?.infant_fare ?? '',
     supplier_pnr: props.group?.supplier_pnr ?? '',
-    hold_minutes: props.group?.hold_minutes ?? '',
+    // New groups start on the default window; the admin can change it per group.
+    hold_minutes: props.group?.hold_minutes ?? props.defaultHoldMinutes,
     notes: props.group?.notes ?? '',
     status: props.group?.status ?? 'draft',
     legs: props.group?.legs.map((leg) => ({
@@ -366,14 +367,19 @@ function submit() {
                 <InputError :message="form.errors.supplier_pnr" />
             </div>
             <div class="grid gap-2">
-                <Label for="hold_minutes">Hold time (minutes)</Label>
+                <Label for="hold_minutes">Payment window (minutes)</Label>
                 <Input
                     id="hold_minutes"
                     v-model="form.hold_minutes"
                     type="number"
                     min="5"
-                    :placeholder="`Default ${defaultHoldMinutes}`"
+                    max="2880"
+                    required
                 />
+                <p class="text-xs text-muted-foreground">
+                    Unpaid seats are released after this. Default
+                    {{ defaultHoldMinutes }}.
+                </p>
                 <InputError :message="form.errors.hold_minutes" />
             </div>
             <div class="grid gap-2">

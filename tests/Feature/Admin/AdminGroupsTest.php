@@ -118,6 +118,50 @@ class AdminGroupsTest extends TestCase
                 ->where('groups.data.0.seats_held', 3));
     }
 
+    public function test_the_payment_window_defaults_to_sixty_minutes(): void
+    {
+        $group = FlightGroup::factory()->create(['hold_minutes' => null]);
+
+        $this->assertSame(60, $group->holdMinutes());
+        $this->actingAs($this->admin)->get('/admin/groups')
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('groups.data.0.hold_minutes', 60)
+                ->where('defaultHoldMinutes', 60));
+    }
+
+    public function test_an_admin_changes_the_payment_window_from_the_list(): void
+    {
+        $group = FlightGroup::factory()->create(['hold_minutes' => null, 'total_seats' => 10]);
+        $agent = User::factory()->agent()->create();
+        $earlier = app(BookingService::class)->hold($agent, $group, adults: 1);
+
+        $this->actingAs($this->admin)->from('/admin/groups')
+            ->patch("/admin/groups/{$group->id}/hold-minutes", ['hold_minutes' => 120])
+            ->assertRedirect('/admin/groups');
+
+        $this->assertSame(120, $group->fresh()->hold_minutes);
+
+        // New holds get the new window; the one already running keeps its deadline.
+        $this->travelTo(now()->startOfMinute());
+        $later = app(BookingService::class)->hold($agent, $group->fresh(), adults: 1);
+        $this->assertEquals(now()->addMinutes(120), $later->hold_expires_at);
+        $this->assertEquals($earlier->hold_expires_at, $earlier->fresh()->hold_expires_at);
+    }
+
+    public function test_the_payment_window_is_bounded_and_admin_only(): void
+    {
+        $group = FlightGroup::factory()->create(['hold_minutes' => 50]);
+
+        $this->actingAs($this->admin)->patch("/admin/groups/{$group->id}/hold-minutes", ['hold_minutes' => 2])
+            ->assertSessionHasErrors('hold_minutes');
+        $this->actingAs($this->admin)->patch("/admin/groups/{$group->id}/hold-minutes", ['hold_minutes' => 5000])
+            ->assertSessionHasErrors('hold_minutes');
+        $this->actingAs(User::factory()->agent()->create())->patch("/admin/groups/{$group->id}/hold-minutes", ['hold_minutes' => 90])
+            ->assertForbidden();
+
+        $this->assertSame(50, $group->fresh()->hold_minutes);
+    }
+
     public function test_approving_a_pending_agency_lets_it_book(): void
     {
         $agency = Agency::factory()->pending()->create();

@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use App\Enums\GroupStatus;
+use App\Models\FlightGroup;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -25,7 +26,7 @@ class FlightGroupRequest extends FormRequest
             'child_fare' => ['required', 'integer', 'min:0', 'max:10000000'],
             'infant_fare' => ['required', 'integer', 'min:0', 'max:10000000'],
             'supplier_pnr' => ['nullable', 'string', 'max:20'],
-            'hold_minutes' => ['nullable', 'integer', 'min:5', 'max:2880'],
+            'hold_minutes' => ['nullable', 'integer', 'min:'.FlightGroup::MIN_HOLD_MINUTES, 'max:'.FlightGroup::MAX_HOLD_MINUTES],
             'status' => ['required', Rule::enum(GroupStatus::class)],
             'notes' => ['nullable', 'string', 'max:2000'],
 
@@ -62,6 +63,7 @@ class FlightGroupRequest extends FormRequest
             'sector' => 'route',
             'duration_days' => 'days',
             'supplier_pnr' => 'airline PNR',
+            'hold_minutes' => 'payment window',
             'legs.*.flight_number' => 'flight number',
             'legs.*.origin' => 'from',
             'legs.*.destination' => 'to',

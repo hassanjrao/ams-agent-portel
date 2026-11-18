@@ -36,11 +36,30 @@
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
+        {{-- Link previews (WhatsApp, Facebook, X): crawlers read these, they don't run the app. --}}
+        @php($preview = \App\Support\LinkPreview::for($page['component'] ?? null, url()->current()))
+        <meta name="description" content="{{ $preview['description'] }}">
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="AMS Global Travel &amp; Tours">
+        <meta property="og:title" content="{{ $preview['title'] }}">
+        <meta property="og:description" content="{{ $preview['description'] }}">
+        <meta property="og:url" content="{{ $preview['url'] }}">
+        <meta property="og:image" content="{{ $preview['image'] }}">
+        <meta property="og:image:secure_url" content="{{ $preview['image'] }}">
+        <meta property="og:image:type" content="image/jpeg">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+        <meta property="og:image:alt" content="AMS Global Travel &amp; Tours agent portal: Umrah and group seats at agent fares">
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="{{ $preview['title'] }}">
+        <meta name="twitter:description" content="{{ $preview['description'] }}">
+        <meta name="twitter:image" content="{{ $preview['image'] }}">
+
         @fonts
 
         @vite(['resources/css/app.css', 'resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
         <x-inertia::head>
-            <title>{{ config('app.name', 'Laravel') }}</title>
+            <title>{{ $preview['title'] }}</title>
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased">

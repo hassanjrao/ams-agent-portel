@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Ban, Pencil, Plus, Search, Send, Ticket } from '@lucide/vue';
+import { Ban, Clock, Pencil, Plus, Search, Send, Ticket } from '@lucide/vue';
 import { computed, reactive, ref, watch } from 'vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import NativeSelect from '@/components/NativeSelect.vue';
 import Pagination from '@/components/Pagination.vue';
+import PaymentWindowDialog from '@/components/PaymentWindowDialog.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +26,7 @@ type GroupRow = {
     seats_held: number;
     seats_available: number;
     adult_fare: number;
+    hold_minutes: number;
     status: 'draft' | 'published' | 'closed';
 };
 
@@ -37,6 +39,7 @@ const props = defineProps<{
         past?: string;
     };
     groupTypes: Option[];
+    defaultHoldMinutes: number;
 }>();
 
 defineOptions({
@@ -77,6 +80,17 @@ function setStatus(group: GroupRow, status: GroupRow['status']) {
         { preserveScroll: true, onSuccess: () => (closing.value = null) },
     );
 }
+
+// The payment window opens in a small dialog instead of the whole group form.
+const windowFor = ref<GroupRow | null>(null);
+const windowOpen = computed({
+    get: () => windowFor.value !== null,
+    set: (value) => {
+        if (!value) {
+            windowFor.value = null;
+        }
+    },
+});
 
 // Closing stops sales, so it asks first; publishing is one click.
 const closing = ref<GroupRow | null>(null);
@@ -157,6 +171,7 @@ const closeOpen = computed({
                         <th class="px-4 py-3 text-right font-medium">
                             Adult fare
                         </th>
+                        <th class="px-4 py-3 font-medium">Pay within</th>
                         <th class="px-4 py-3 font-medium">Status</th>
                         <th class="px-4 py-3 text-right">Actions</th>
                     </tr>
@@ -195,6 +210,20 @@ const closeOpen = computed({
                             class="px-4 py-3 text-right whitespace-nowrap tabular-nums"
                         >
                             {{ formatPKR(group.adult_fare) }}
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <button
+                                type="button"
+                                class="group/window inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold tabular-nums transition hover:border-gold hover:bg-gold/10"
+                                :title="`Change how long agencies have to pay for ${group.sector}`"
+                                @click="windowFor = group"
+                            >
+                                <Clock class="size-3.5 text-gold-dark" />
+                                {{ group.hold_minutes }} min
+                                <Pencil
+                                    class="size-3 text-muted-foreground opacity-60 group-hover/window:opacity-100"
+                                />
+                            </button>
                         </td>
                         <td class="px-4 py-3">
                             <StatusBadge :status="group.status" />
@@ -237,7 +266,7 @@ const closeOpen = computed({
                     </tr>
                     <tr v-if="groups.data.length === 0">
                         <td
-                            colspan="6"
+                            colspan="7"
                             class="px-4 py-10 text-center text-muted-foreground"
                         >
                             No groups match these filters.
@@ -252,6 +281,12 @@ const closeOpen = computed({
             :from="groups.from"
             :to="groups.to"
             :total="groups.total"
+        />
+
+        <PaymentWindowDialog
+            v-model:open="windowOpen"
+            :group="windowFor"
+            :default-minutes="defaultHoldMinutes"
         />
 
         <ConfirmDialog

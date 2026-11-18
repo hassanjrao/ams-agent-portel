@@ -38,6 +38,11 @@ class FlightGroup extends Model
 {
     use HasFactory;
 
+    // Bounds of the payment window an admin can set: five minutes to two days.
+    public const MIN_HOLD_MINUTES = 5;
+
+    public const MAX_HOLD_MINUTES = 2880;
+
     protected function casts(): array
     {
         return [

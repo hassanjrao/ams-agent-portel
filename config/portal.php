@@ -7,8 +7,9 @@ return [
     | Booking holds
     |--------------------------------------------------------------------------
     |
-    | Minutes an unpaid booking keeps its seats before they go back to the
-    | block. A group can override it with its own hold_minutes.
+    | The payment window: minutes an unpaid booking keeps its seats before they
+    | go back to the block. Admins set it per group (on the group form or from
+    | the groups list); this is what a group uses when it has none of its own.
     |
     */
 
