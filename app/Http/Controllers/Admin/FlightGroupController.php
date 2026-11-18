@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\BookingStatus;
+use App\Enums\GroupSourcing;
 use App\Enums\GroupStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\FlightGroupRequest;
 use App\Models\Airline;
 use App\Models\FlightGroup;
 use App\Models\GroupType;
+use App\Models\Supplier;
 use App\Services\FlightGroupService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -27,16 +29,20 @@ class FlightGroupController extends Controller
             'type' => ['nullable', 'integer'],
             'status' => ['nullable', Rule::enum(GroupStatus::class)],
             'search' => ['nullable', 'string', 'max:60'],
+            'sourcing' => ['nullable', Rule::enum(GroupSourcing::class)],
+            'supplier' => ['nullable', 'integer'],
             // Past departures are hidden unless asked for: the list is mostly about what's still selling.
             'past' => ['nullable', 'boolean'],
         ]);
 
         $groups = FlightGroup::query()
-            ->with(['airline:id,name,code', 'groupType:id,name'])
+            ->with(['airline:id,name,code', 'groupType:id,name', 'supplier:id,name'])
             ->withSeatsTaken()
             ->withSum(['bookings as seats_confirmed' => fn (Builder $q) => $q->where('status', BookingStatus::Confirmed)], 'seats')
             ->when($filters['type'] ?? null, fn (Builder $q, $type) => $q->where('group_type_id', $type))
             ->when($filters['status'] ?? null, fn (Builder $q, $status) => $q->where('status', $status))
+            ->when($filters['sourcing'] ?? null, fn (Builder $q, $sourcing) => $q->where('sourcing', $sourcing))
+            ->when($filters['supplier'] ?? null, fn (Builder $q, $supplier) => $q->where('supplier_id', $supplier))
             ->when($filters['search'] ?? null, fn (Builder $q, $search) => $q->where(fn (Builder $q) => $q
                 ->where('sector', 'like', "%{$search}%")
                 ->orWhere('supplier_pnr', 'like', "%{$search}%")
@@ -62,11 +68,14 @@ class FlightGroupController extends Controller
                 'seats_available' => $g->seatsAvailable(),
                 'adult_fare' => $g->adult_fare,
                 'hold_minutes' => $g->holdMinutes(),
+                'sourcing' => $g->sourcing->value,
+                'supplier' => $g->supplier?->name,
                 'status' => $g->status->value,
             ]),
             'filters' => $filters,
             'groupTypes' => GroupType::query()->orderBy('sort_order')->get(['id', 'name']),
             'defaultHoldMinutes' => config('portal.hold_minutes'),
+            'suppliers' => Supplier::query()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -95,8 +104,9 @@ class FlightGroupController extends Controller
             'group' => [
                 ...$flightGroup->only([
                     'id', 'group_type_id', 'airline_id', 'sector', 'duration_days', 'total_seats',
-                    'adult_fare', 'child_fare', 'infant_fare', 'supplier_pnr', 'hold_minutes', 'notes',
+                    'adult_fare', 'child_fare', 'infant_fare', 'supplier_pnr', 'supplier_id', 'hold_minutes', 'notes',
                 ]),
+                'sourcing' => $flightGroup->sourcing->value,
                 'status' => $flightGroup->status->value,
                 'seats_taken' => $flightGroup->total_seats - $flightGroup->seatsAvailable(),
                 'legs' => $flightGroup->legs->map(fn ($leg) => [
@@ -110,7 +120,7 @@ class FlightGroupController extends Controller
                     'meal' => $leg->meal,
                 ]),
             ],
-            ...$this->formOptions(),
+            ...$this->formOptions($flightGroup),
         ]);
     }
 
@@ -158,9 +168,14 @@ class FlightGroupController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function formOptions(): array
+    private function formOptions(?FlightGroup $group = null): array
     {
         return [
+            // Active suppliers, plus the group's own one if it has since been deactivated.
+            'suppliers' => Supplier::query()
+                ->where(fn (Builder $q) => $q->where('is_active', true)->when($group?->supplier_id, fn (Builder $q, $id) => $q->orWhere('id', $id)))
+                ->orderBy('name')
+                ->get(['id', 'name']),
             'groupTypes' => GroupType::query()->where('is_active', true)->orderBy('sort_order')->get(['id', 'name']),
             'airlines' => Airline::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'code']),
             'statuses' => array_column(GroupStatus::cases(), 'value'),

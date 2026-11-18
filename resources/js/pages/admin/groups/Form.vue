@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { Plus, Trash2 } from '@lucide/vue';
+import { Building, Handshake, Plus, Trash2 } from '@lucide/vue';
 import { computed } from 'vue';
 import InputError from '@/components/InputError.vue';
 import NativeSelect from '@/components/NativeSelect.vue';
@@ -32,6 +32,8 @@ type Group = {
     child_fare: number;
     infant_fare: number;
     supplier_pnr: string | null;
+    sourcing: 'direct' | 'outsourced';
+    supplier_id: number | null;
     hold_minutes: number | null;
     notes: string | null;
     status: string;
@@ -45,6 +47,7 @@ const props = defineProps<{
     airlines: AirlineOption[];
     statuses: string[];
     defaultHoldMinutes: number;
+    suppliers: Option[];
 }>();
 
 defineOptions({
@@ -76,6 +79,8 @@ const form = useForm({
     child_fare: props.group?.child_fare ?? '',
     infant_fare: props.group?.infant_fare ?? '',
     supplier_pnr: props.group?.supplier_pnr ?? '',
+    sourcing: props.group?.sourcing ?? 'direct',
+    supplier_id: props.group?.supplier_id ?? ('' as number | ''),
     // New groups start on the default window; the admin can change it per group.
     hold_minutes: props.group?.hold_minutes ?? props.defaultHoldMinutes,
     notes: props.group?.notes ?? '',
@@ -87,6 +92,21 @@ const form = useForm({
 });
 
 const editing = computed(() => props.group !== null);
+
+const sourcingOptions = [
+    {
+        value: 'direct',
+        title: 'Direct by AMS',
+        text: 'AMS bought this block from the airline itself.',
+        icon: Building,
+    },
+    {
+        value: 'outsourced',
+        title: 'Outsourced',
+        text: 'AMS took these seats from a supplier.',
+        icon: Handshake,
+    },
+] as const;
 
 // Suggest the route from the flights while the admin hasn't typed one.
 const suggestedSector = computed(() => {
@@ -198,6 +218,74 @@ function submit() {
                     placeholder="e.g. 21"
                 />
                 <InputError :message="form.errors.duration_days" />
+            </div>
+        </section>
+
+        <section class="panel grid gap-4 p-5">
+            <div>
+                <h2 class="font-medium">Where the seats came from</h2>
+                <p class="text-xs text-muted-foreground">
+                    For AMS's own records. Agencies never see this.
+                </p>
+            </div>
+            <div class="grid gap-3 sm:grid-cols-2">
+                <label
+                    v-for="option in sourcingOptions"
+                    :key="option.value"
+                    class="flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition"
+                    :class="
+                        form.sourcing === option.value
+                            ? 'border-gold bg-gold/10 ring-1 ring-gold/40'
+                            : 'hover:bg-muted/50'
+                    "
+                >
+                    <input
+                        v-model="form.sourcing"
+                        type="radio"
+                        name="sourcing"
+                        :value="option.value"
+                        class="sr-only"
+                    />
+                    <span
+                        class="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted"
+                    >
+                        <component :is="option.icon" class="size-4" />
+                    </span>
+                    <span>
+                        <span class="block text-sm font-semibold">{{
+                            option.title
+                        }}</span>
+                        <span class="block text-xs text-muted-foreground">{{
+                            option.text
+                        }}</span>
+                    </span>
+                </label>
+            </div>
+            <InputError :message="form.errors.sourcing" />
+            <div
+                v-if="form.sourcing === 'outsourced'"
+                class="grid gap-2 sm:max-w-sm"
+            >
+                <Label for="supplier_id">Supplier</Label>
+                <NativeSelect id="supplier_id" v-model="form.supplier_id">
+                    <option value="" disabled>Choose supplier</option>
+                    <option
+                        v-for="supplier in suppliers"
+                        :key="supplier.id"
+                        :value="supplier.id"
+                    >
+                        {{ supplier.name }}
+                    </option>
+                </NativeSelect>
+                <p class="text-xs text-muted-foreground">
+                    Not in the list?
+                    <Link
+                        :href="admin.suppliers.index()"
+                        class="font-medium text-highlight hover:underline"
+                        >Add it on the Suppliers page</Link
+                    >
+                </p>
+                <InputError :message="form.errors.supplier_id" />
             </div>
         </section>
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Enums\GroupSourcing;
 use App\Enums\GroupStatus;
 use App\Models\FlightGroup;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -10,6 +11,14 @@ use Illuminate\Validation\Rule;
 
 class FlightGroupRequest extends FormRequest
 {
+    // A group saved without saying where its seats came from was bought by AMS directly.
+    protected function prepareForValidation(): void
+    {
+        if (! $this->filled('sourcing')) {
+            $this->merge(['sourcing' => GroupSourcing::Direct->value]);
+        }
+    }
+
     /**
      * @return array<string, ValidationRule|array<mixed>|string>
      */
@@ -26,6 +35,8 @@ class FlightGroupRequest extends FormRequest
             'child_fare' => ['required', 'integer', 'min:0', 'max:10000000'],
             'infant_fare' => ['required', 'integer', 'min:0', 'max:10000000'],
             'supplier_pnr' => ['nullable', 'string', 'max:20'],
+            'sourcing' => ['required', Rule::enum(GroupSourcing::class)],
+            'supplier_id' => ['nullable', 'required_if:sourcing,'.GroupSourcing::Outsourced->value, 'integer', Rule::exists('suppliers', 'id')],
             'hold_minutes' => ['nullable', 'integer', 'min:'.FlightGroup::MIN_HOLD_MINUTES, 'max:'.FlightGroup::MAX_HOLD_MINUTES],
             'status' => ['required', Rule::enum(GroupStatus::class)],
             'notes' => ['nullable', 'string', 'max:2000'],
@@ -49,6 +60,7 @@ class FlightGroupRequest extends FormRequest
         return [
             'sector.regex' => 'Write the route as airport codes joined by dashes, e.g. MUX-JED-MUX.',
             'legs.required' => 'Add at least one flight.',
+            'supplier_id.required_if' => 'Choose the supplier this group was bought from.',
         ];
     }
 
@@ -63,6 +75,7 @@ class FlightGroupRequest extends FormRequest
             'sector' => 'route',
             'duration_days' => 'days',
             'supplier_pnr' => 'airline PNR',
+            'supplier_id' => 'supplier',
             'hold_minutes' => 'payment window',
             'legs.*.flight_number' => 'flight number',
             'legs.*.origin' => 'from',
@@ -80,7 +93,13 @@ class FlightGroupRequest extends FormRequest
      */
     public function groupAttributes(): array
     {
-        return collect($this->validated())->except('legs')->all();
+        $attributes = collect($this->validated())->except('legs')->all();
+        // A direct group has no supplier, whatever the form still held.
+        if ($attributes['sourcing'] === GroupSourcing::Direct->value) {
+            $attributes['supplier_id'] = null;
+        }
+
+        return $attributes;
     }
 
     /**

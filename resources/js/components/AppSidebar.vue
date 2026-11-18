@@ -4,6 +4,7 @@ import {
     BookOpenText,
     Building2,
     CreditCard,
+    Handshake,
     Landmark,
     LayoutGrid,
     Plane,
@@ -68,6 +69,7 @@ const adminWork = computed<NavItem[]>(() => {
 const adminSetup: NavItem[] = [
     { title: 'Airlines', href: admin.airlines.index(), icon: Plane },
     { title: 'Categories', href: admin.groupTypes.index(), icon: Tags },
+    { title: 'Suppliers', href: admin.suppliers.index(), icon: Handshake },
     {
         title: 'Bank accounts',
         href: admin.bankAccounts.index(),

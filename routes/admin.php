@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FlightGroupController;
 use App\Http\Controllers\Admin\GroupTypeController;
 use App\Http\Controllers\Admin\PaymentController;
+use App\Http\Controllers\Admin\SupplierController;
 use Illuminate\Support\Facades\Route;
 
 // AMS staff only.
@@ -45,6 +46,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('group-types', [GroupTypeController::class, 'index'])->name('group-types.index');
     Route::post('group-types', [GroupTypeController::class, 'store'])->name('group-types.store');
     Route::put('group-types/{groupType}', [GroupTypeController::class, 'update'])->name('group-types.update');
+
+    Route::get('suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
+    Route::post('suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
+    Route::put('suppliers/{supplier}', [SupplierController::class, 'update'])->name('suppliers.update');
 
     Route::get('bank-accounts', [BankAccountController::class, 'index'])->name('bank-accounts.index');
     Route::post('bank-accounts', [BankAccountController::class, 'store'])->name('bank-accounts.store');

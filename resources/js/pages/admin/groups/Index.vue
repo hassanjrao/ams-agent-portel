@@ -1,6 +1,16 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Ban, Clock, Pencil, Plus, Search, Send, Ticket } from '@lucide/vue';
+import {
+    Ban,
+    Building,
+    Clock,
+    Handshake,
+    Pencil,
+    Plus,
+    Search,
+    Send,
+    Ticket,
+} from '@lucide/vue';
 import { computed, reactive, ref, watch } from 'vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import NativeSelect from '@/components/NativeSelect.vue';
@@ -27,6 +37,8 @@ type GroupRow = {
     seats_available: number;
     adult_fare: number;
     hold_minutes: number;
+    sourcing: 'direct' | 'outsourced';
+    supplier: string | null;
     status: 'draft' | 'published' | 'closed';
 };
 
@@ -37,9 +49,12 @@ const props = defineProps<{
         status?: string;
         search?: string;
         past?: string;
+        sourcing?: string;
+        supplier?: string;
     };
     groupTypes: Option[];
     defaultHoldMinutes: number;
+    suppliers: Option[];
 }>();
 
 defineOptions({
@@ -53,7 +68,19 @@ const filters = reactive({
     status: props.filters.status ?? '',
     search: props.filters.search ?? '',
     past: props.filters.past === '1',
+    sourcing: props.filters.sourcing ?? '',
+    supplier: props.filters.supplier ?? '',
 });
+
+// A supplier only narrows outsourced groups, so picking direct clears it.
+watch(
+    () => filters.sourcing,
+    (sourcing) => {
+        if (sourcing !== 'outsourced') {
+            filters.supplier = '';
+        }
+    },
+);
 
 let timer: ReturnType<typeof setTimeout> | undefined;
 watch(filters, () => {
@@ -67,6 +94,8 @@ watch(filters, () => {
                 status: filters.status || undefined,
                 search: filters.search || undefined,
                 past: filters.past ? 1 : undefined,
+                sourcing: filters.sourcing || undefined,
+                supplier: filters.supplier || undefined,
             },
             { preserveState: true, preserveScroll: true, replace: true },
         );
@@ -151,6 +180,25 @@ const closeOpen = computed({
                 <option value="published">Published</option>
                 <option value="closed">Closed</option>
             </NativeSelect>
+            <NativeSelect v-model="filters.sourcing" class="w-full sm:w-44">
+                <option value="">Direct &amp; outsourced</option>
+                <option value="direct">Direct (AMS)</option>
+                <option value="outsourced">Outsourced</option>
+            </NativeSelect>
+            <NativeSelect
+                v-if="filters.sourcing === 'outsourced'"
+                v-model="filters.supplier"
+                class="w-full sm:w-48"
+            >
+                <option value="">All suppliers</option>
+                <option
+                    v-for="supplier in suppliers"
+                    :key="supplier.id"
+                    :value="String(supplier.id)"
+                >
+                    {{ supplier.name }}
+                </option>
+            </NativeSelect>
             <label class="flex items-center gap-2 text-sm">
                 <input
                     v-model="filters.past"
@@ -195,6 +243,28 @@ const closeOpen = computed({
                                 {{ group.airline.name }} ·
                                 {{ group.group_type }}
                             </div>
+                            <span
+                                class="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                                :class="
+                                    group.sourcing === 'direct'
+                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300'
+                                        : 'bg-sky-50 text-sky-800 dark:bg-sky-950/50 dark:text-sky-300'
+                                "
+                            >
+                                <component
+                                    :is="
+                                        group.sourcing === 'direct'
+                                            ? Building
+                                            : Handshake
+                                    "
+                                    class="size-3"
+                                />
+                                {{
+                                    group.sourcing === 'direct'
+                                        ? 'Direct'
+                                        : (group.supplier ?? 'Outsourced')
+                                }}
+                            </span>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap">
                             <div class="font-medium tabular-nums">

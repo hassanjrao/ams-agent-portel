@@ -47,7 +47,7 @@ class AdminGroupsTest extends TestCase
             '/admin/agencies', "/admin/agencies/{$agency->id}", "/admin/agencies/{$agency->id}/ledger",
             '/admin/bookings', '/admin/bookings?status=on_hold', "/admin/bookings/{$booking->id}",
             '/admin/payments', '/admin/payments?status=approved',
-            '/admin/airlines', '/admin/group-types', '/admin/bank-accounts',
+            '/admin/airlines', '/admin/group-types', '/admin/bank-accounts', '/admin/suppliers',
         ] as $url) {
             $this->actingAs($this->admin)->get($url)->assertOk();
         }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\GroupSourcing;
 use App\Enums\GroupStatus;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -24,6 +25,8 @@ use Illuminate\Support\Carbon;
  * @property int $child_fare
  * @property int $infant_fare
  * @property string|null $supplier_pnr
+ * @property GroupSourcing $sourcing Admin-only: bought by AMS directly or outsourced.
+ * @property int|null $supplier_id Set only when outsourced.
  * @property int|null $hold_minutes
  * @property GroupStatus $status
  * @property string|null $notes
@@ -32,7 +35,7 @@ use Illuminate\Support\Carbon;
  */
 #[Fillable([
     'group_type_id', 'airline_id', 'sector', 'departure_date', 'return_date', 'duration_days',
-    'total_seats', 'adult_fare', 'child_fare', 'infant_fare', 'supplier_pnr', 'hold_minutes', 'status', 'notes',
+    'total_seats', 'adult_fare', 'child_fare', 'infant_fare', 'supplier_pnr', 'sourcing', 'supplier_id', 'hold_minutes', 'status', 'notes',
 ])]
 class FlightGroup extends Model
 {
@@ -47,6 +50,7 @@ class FlightGroup extends Model
     {
         return [
             'status' => GroupStatus::class,
+            'sourcing' => GroupSourcing::class,
             'departure_date' => 'date',
             'return_date' => 'date',
         ];
@@ -62,6 +66,12 @@ class FlightGroup extends Model
     public function airline(): BelongsTo
     {
         return $this->belongsTo(Airline::class);
+    }
+
+    /** @return BelongsTo<Supplier, $this> */
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
     }
 
     /** @return HasMany<FlightGroupLeg, $this> */
