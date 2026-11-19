@@ -42,7 +42,7 @@ class BookingPdfTest extends TestCase
         }
 
         $this->actingAs($agent)->get("/bookings/{$booking->id}/pdf?price=0")->assertOk()
-            ->assertHeader('Content-Disposition', 'attachment; filename="Madina-Travels_MUX-JED-MUX_'.$booking->flightGroup->departure_date->format('d-M-Y')."_{$booking->reference}_without-price.pdf\"");
+            ->assertHeader('Content-Disposition', 'attachment; filename="Madina-Travels_MUX-JED-MUX_'.$booking->flightGroup->departure_date->format('d-M-Y')."_{$booking->reference}.pdf\"");
 
         $this->actingAs(User::factory()->agent()->create())->get("/bookings/{$booking->id}/pdf")->assertForbidden();
     }
@@ -66,5 +66,6 @@ class BookingPdfTest extends TestCase
         $this->assertStringNotContainsString('PKR 366,000', $without);
         $this->assertStringNotContainsString('PKR 183,000', $without);
         $this->assertStringNotContainsString('Total', $without);
+        $this->assertStringNotContainsString('price', strtolower(strip_tags($without)));
     }
 }

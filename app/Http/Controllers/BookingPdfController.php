@@ -24,7 +24,7 @@ class BookingPdfController extends Controller
 
         return response($this->pdf->render($booking, $withPrice), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="'.$this->pdf->filename($booking, $withPrice).'"',
+            'Content-Disposition' => 'attachment; filename="'.$this->pdf->filename($booking).'"',
             'Cache-Control' => 'private, no-store',
             'X-Content-Type-Options' => 'nosniff',
         ]);

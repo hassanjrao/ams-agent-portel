@@ -22,9 +22,10 @@ class BookingPdf
 
     /**
      * "Madina-Travels_MUX-JED-MUX_29-Nov-2026_AMS-261100001.pdf": agency, route, departure date
-     * and reference, so a folder of them sorts and reads at a glance.
+     * and reference, so a folder of them sorts and reads at a glance. The same with or without
+     * the fares: the copy without them goes on to the agency's customer, so it says nothing about it.
      */
-    public function filename(Booking $booking, bool $withPrice): string
+    public function filename(Booking $booking): string
     {
         $booking->loadMissing(['agency', 'flightGroup']);
         $agency = trim((string) preg_replace('/[^A-Za-z0-9]+/', '-', Str::ascii($booking->agency->name)), '-') ?: 'Agency';
@@ -34,7 +35,6 @@ class BookingPdf
             $booking->flightGroup->sector,
             $booking->flightGroup->departure_date->format('d-M-Y'),
             $booking->reference,
-            $withPrice ? null : 'without-price',
         ])).'.pdf';
     }
 
