@@ -113,7 +113,7 @@ class FlightGroupController extends Controller
                     'flight_number' => $leg->flight_number,
                     'origin' => $leg->origin,
                     'destination' => $leg->destination,
-                    // The format <input type="datetime-local"> expects.
+                    // "YYYY-MM-DDTHH:MM", what the form's date and 24-hour time fields read.
                     'departs_at' => $leg->departs_at->format('Y-m-d\TH:i'),
                     'arrives_at' => $leg->arrives_at->format('Y-m-d\TH:i'),
                     'baggage' => $leg->baggage,

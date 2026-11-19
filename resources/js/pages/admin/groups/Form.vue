@@ -2,6 +2,7 @@
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { Building, Handshake, Plus, Trash2 } from '@lucide/vue';
 import { computed } from 'vue';
+import DateTime24Input from '@/components/DateTime24Input.vue';
 import InputError from '@/components/InputError.vue';
 import NativeSelect from '@/components/NativeSelect.vue';
 import { Button } from '@/components/ui/button';
@@ -136,7 +137,7 @@ function removeLeg(index: number) {
     form.legs.splice(index, 1);
 }
 
-// "Fri 05 Dec 2026, 16:35" from the datetime-local value, so the admin reads back what they picked.
+// "Fri 05 Dec 2026, 16:35" from the flight's date and time, so the admin reads back what they picked.
 function spellDate(value: string): string {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) {
@@ -150,15 +151,16 @@ function spellDate(value: string): string {
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
+        hourCycle: 'h23',
     });
 }
 
-// Start of today in the format datetime-local expects: the pickers grey out days that have passed.
+// Today as YYYY-MM-DD: the date pickers grey out days that have passed.
 const earliest = (() => {
     const d = new Date();
     const pad = (n: number) => String(n).padStart(2, '0');
 
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T00:00`;
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 })();
 
 function isPast(value: string): boolean {
@@ -373,11 +375,10 @@ function submit() {
                     <InputError :message="legError(index, 'destination')" />
                 </div>
                 <div class="grid gap-1.5 sm:col-span-2 lg:col-span-3">
-                    <Label :for="`dep-${index}`">Departs (local)</Label>
-                    <Input
+                    <Label :for="`dep-${index}`">Departs (local, 24h)</Label>
+                    <DateTime24Input
                         :id="`dep-${index}`"
                         v-model="leg.departs_at"
-                        type="datetime-local"
                         :min="earliest"
                     />
                     <p
@@ -397,11 +398,10 @@ function submit() {
                     <InputError :message="legError(index, 'departs_at')" />
                 </div>
                 <div class="grid gap-1.5 sm:col-span-2 lg:col-span-3">
-                    <Label :for="`arr-${index}`">Arrives (local)</Label>
-                    <Input
+                    <Label :for="`arr-${index}`">Arrives (local, 24h)</Label>
+                    <DateTime24Input
                         :id="`arr-${index}`"
                         v-model="leg.arrives_at"
-                        type="datetime-local"
                         :min="earliest"
                     />
                     <p
