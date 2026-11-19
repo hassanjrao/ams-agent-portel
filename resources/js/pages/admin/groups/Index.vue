@@ -10,6 +10,7 @@ import {
     Search,
     Send,
     Ticket,
+    Trash2,
 } from '@lucide/vue';
 import { computed, reactive, ref, watch } from 'vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
@@ -120,6 +121,33 @@ const windowOpen = computed({
         }
     },
 });
+
+// Deleting hides the group everywhere (a soft delete on the server), so it asks first.
+const deleting = ref<GroupRow | null>(null);
+const deleteError = ref<string | undefined>();
+const deleteOpen = computed({
+    get: () => deleting.value !== null,
+    set: (value) => {
+        if (!value) {
+            deleting.value = null;
+            deleteError.value = undefined;
+        }
+    },
+});
+const deleteProcessing = ref(false);
+
+function deleteGroup() {
+    if (!deleting.value) {
+        return;
+    }
+    router.delete(admin.groups.destroy.url(deleting.value.id), {
+        preserveScroll: true,
+        onStart: () => (deleteProcessing.value = true),
+        onFinish: () => (deleteProcessing.value = false),
+        onSuccess: () => (deleteOpen.value = false),
+        onError: (errors) => (deleteError.value = errors.group),
+    });
+}
 
 // Closing stops sales, so it asks first; publishing is one click.
 const closing = ref<GroupRow | null>(null);
@@ -331,6 +359,15 @@ const closeOpen = computed({
                                         ><Pencil /> Edit</Link
                                     >
                                 </Button>
+                                <Button
+                                    size="icon-sm"
+                                    variant="ghost"
+                                    class="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                    :aria-label="`Delete group ${group.sector}`"
+                                    :title="`Delete ${group.sector}`"
+                                    @click="deleting = group"
+                                    ><Trash2
+                                /></Button>
                             </div>
                         </td>
                     </tr>
@@ -357,6 +394,21 @@ const closeOpen = computed({
             v-model:open="windowOpen"
             :group="windowFor"
             :default-minutes="defaultHoldMinutes"
+        />
+
+        <ConfirmDialog
+            v-model:open="deleteOpen"
+            :title="`Delete ${deleting?.sector ?? ''} group?`"
+            :description="
+                deleting
+                    ? `${formatDate(deleting.departure_date)} · ${deleting.airline.name}. It disappears from the portal for agencies and from this list. Bookings already made on it keep their details.`
+                    : ''
+            "
+            confirm-label="Delete group"
+            destructive
+            :processing="deleteProcessing"
+            :error="deleteError"
+            @confirm="deleteGroup"
         />
 
         <ConfirmDialog

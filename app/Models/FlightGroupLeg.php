@@ -34,6 +34,6 @@ class FlightGroupLeg extends Model
     /** @return BelongsTo<FlightGroup, $this> */
     public function flightGroup(): BelongsTo
     {
-        return $this->belongsTo(FlightGroup::class);
+        return $this->belongsTo(FlightGroup::class)->withTrashed();
     }
 }

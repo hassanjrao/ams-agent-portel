@@ -57,6 +57,8 @@ class AdminGroupsTest extends TestCase
     {
         $type = GroupType::factory()->create();
         $airline = Airline::factory()->create();
+        $out = now()->addDays(10)->toDateString();
+        $return = now()->addDays(31)->toDateString();
 
         $this->actingAs($this->admin)->post('/admin/groups', [
             'group_type_id' => $type->id,
@@ -70,15 +72,15 @@ class AdminGroupsTest extends TestCase
             'status' => 'published',
             // Out of order on purpose: dates come from the earliest and latest flight.
             'legs' => [
-                ['flight_number' => 'sv 800', 'origin' => 'jed', 'destination' => 'mux', 'departs_at' => '2026-12-11T08:35', 'arrives_at' => '2026-12-11T14:55', 'baggage' => '23+23', 'meal' => true],
-                ['flight_number' => 'SV801', 'origin' => 'MUX', 'destination' => 'JED', 'departs_at' => '2026-11-20T16:35', 'arrives_at' => '2026-11-20T19:55', 'baggage' => '23+7', 'meal' => true],
+                ['flight_number' => 'sv 800', 'origin' => 'jed', 'destination' => 'mux', 'departs_at' => $return.'T08:35', 'arrives_at' => $return.'T14:55', 'baggage' => '23+23', 'meal' => true],
+                ['flight_number' => 'SV801', 'origin' => 'MUX', 'destination' => 'JED', 'departs_at' => $out.'T16:35', 'arrives_at' => $out.'T19:55', 'baggage' => '23+7', 'meal' => true],
             ],
         ])->assertRedirect('/admin/groups');
 
         $group = FlightGroup::query()->with('legs')->sole();
         $this->assertSame('MUX-JED-MUX', $group->sector);
-        $this->assertSame('2026-11-20', $group->departure_date->toDateString());
-        $this->assertSame('2026-12-11', $group->return_date->toDateString());
+        $this->assertSame($out, $group->departure_date->toDateString());
+        $this->assertSame($return, $group->return_date->toDateString());
         $this->assertSame(['SV801', 'SV800'], $group->legs->pluck('flight_number')->all());
         $this->assertSame(GroupStatus::Published, $group->status);
     }

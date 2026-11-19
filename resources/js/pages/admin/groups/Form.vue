@@ -29,8 +29,8 @@ type Group = {
     duration_days: number | null;
     total_seats: number;
     adult_fare: number;
-    child_fare: number;
-    infant_fare: number;
+    child_fare: number | null;
+    infant_fare: number | null;
     supplier_pnr: string | null;
     sourcing: 'direct' | 'outsourced';
     supplier_id: number | null;
@@ -134,6 +134,39 @@ function addLeg() {
 
 function removeLeg(index: number) {
     form.legs.splice(index, 1);
+}
+
+// "Fri 05 Dec 2026, 16:35" from the datetime-local value, so the admin reads back what they picked.
+function spellDate(value: string): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+        return '';
+    }
+
+    return date.toLocaleString('en-GB', {
+        weekday: 'short',
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+}
+
+// Start of today in the format datetime-local expects: the pickers grey out days that have passed.
+const earliest = (() => {
+    const d = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T00:00`;
+})();
+
+function isPast(value: string): boolean {
+    const date = new Date(value);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return !Number.isNaN(date.getTime()) && date < today;
 }
 
 function legError(index: number, field: keyof Leg): string | undefined {
@@ -345,7 +378,22 @@ function submit() {
                         :id="`dep-${index}`"
                         v-model="leg.departs_at"
                         type="datetime-local"
+                        :min="earliest"
                     />
+                    <p
+                        v-if="leg.departs_at"
+                        class="text-xs font-medium"
+                        :class="
+                            isPast(leg.departs_at)
+                                ? 'text-destructive'
+                                : 'text-muted-foreground'
+                        "
+                    >
+                        {{ spellDate(leg.departs_at) }}
+                        <template v-if="isPast(leg.departs_at)">
+                            · already passed</template
+                        >
+                    </p>
                     <InputError :message="legError(index, 'departs_at')" />
                 </div>
                 <div class="grid gap-1.5 sm:col-span-2 lg:col-span-3">
@@ -354,7 +402,14 @@ function submit() {
                         :id="`arr-${index}`"
                         v-model="leg.arrives_at"
                         type="datetime-local"
+                        :min="earliest"
                     />
+                    <p
+                        v-if="leg.arrives_at"
+                        class="text-xs font-medium text-muted-foreground"
+                    >
+                        {{ spellDate(leg.arrives_at) }}
+                    </p>
                     <InputError :message="legError(index, 'arrives_at')" />
                 </div>
                 <div class="grid gap-1.5 sm:col-span-2 lg:col-span-1">
@@ -429,7 +484,11 @@ function submit() {
                     v-model="form.child_fare"
                     type="number"
                     min="0"
+                    placeholder="Same as adult"
                 />
+                <p class="text-xs text-muted-foreground">
+                    Optional. Empty: children pay the adult fare.
+                </p>
                 <InputError :message="form.errors.child_fare" />
             </div>
             <div class="grid gap-2">
@@ -439,7 +498,11 @@ function submit() {
                     v-model="form.infant_fare"
                     type="number"
                     min="0"
+                    placeholder="No infants"
                 />
+                <p class="text-xs text-muted-foreground">
+                    Optional. Empty: infants can't be booked on this group.
+                </p>
                 <InputError :message="form.errors.infant_fare" />
             </div>
         </section>

@@ -82,8 +82,11 @@ defineProps<{ group: GroupCard }>();
                     {{ formatPKR(group.adult_fare) }}
                 </p>
                 <p class="text-xs text-muted-foreground">
-                    Child {{ formatPKR(group.child_fare) }} · Infant
-                    {{ formatPKR(group.infant_fare) }}
+                    Child {{ formatPKR(group.child_fare) }} ·
+                    <template v-if="group.infant_fare !== null"
+                        >Infant {{ formatPKR(group.infant_fare) }}</template
+                    >
+                    <template v-else>No infants</template>
                 </p>
             </div>
             <SeatsMeter

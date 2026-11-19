@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Booking;
 use App\Models\FlightGroup;
 use App\Models\User;
 use Illuminate\Support\Carbon;
@@ -52,6 +53,32 @@ class FlightGroupService
             }
 
             return $group->load('legs');
+        });
+    }
+
+    /**
+     * Delete a group from the portal. It is a soft delete: agencies and the admin lists stop showing
+     * it, while the row stays so bookings already made on it keep their flights. A group still
+     * holding seats (confirmed bookings, or holds that haven't run out) can't be deleted.
+     *
+     * @throws ValidationException when bookings still hold seats on it
+     */
+    public function delete(FlightGroup $group): void
+    {
+        DB::transaction(function () use ($group) {
+            // Same lock bookings take, so no hold can land while this checks.
+            $locked = FlightGroup::query()->whereKey($group->id)->lockForUpdate()->firstOrFail();
+
+            $live = Booking::query()->where('flight_group_id', $locked->id)->holdingSeats()->count();
+            if ($live > 0) {
+                throw ValidationException::withMessages([
+                    'group' => $live === 1
+                        ? 'One booking is confirmed or on hold on this group. Cancel it first, then delete the group.'
+                        : "{$live} bookings are confirmed or on hold on this group. Cancel them first, then delete the group.",
+                ]);
+            }
+
+            $locked->delete();
         });
     }
 }

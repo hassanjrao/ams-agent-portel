@@ -27,7 +27,8 @@ class GroupPresenter
             'total_seats' => $group->total_seats,
             'seats_available' => $group->seatsAvailable(),
             'adult_fare' => $group->adult_fare,
-            'child_fare' => $group->child_fare,
+            'child_fare' => $group->childFare(),
+            // Null when the group doesn't take infants.
             'infant_fare' => $group->infant_fare,
             'hold_minutes' => $group->holdMinutes(),
             'notes' => $group->notes,

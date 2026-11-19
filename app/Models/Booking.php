@@ -62,7 +62,8 @@ class Booking extends Model
     /** @return BelongsTo<FlightGroup, $this> */
     public function flightGroup(): BelongsTo
     {
-        return $this->belongsTo(FlightGroup::class);
+        // A deleted group still shows on the bookings made on it.
+        return $this->belongsTo(FlightGroup::class)->withTrashed();
     }
 
     /** @return HasMany<BookingPassenger, $this> */

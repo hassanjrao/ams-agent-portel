@@ -32,8 +32,9 @@ class FlightGroupRequest extends FormRequest
             'duration_days' => ['nullable', 'integer', 'min:1', 'max:120'],
             'total_seats' => ['required', 'integer', 'min:1', 'max:999'],
             'adult_fare' => ['required', 'integer', 'min:0', 'max:10000000'],
-            'child_fare' => ['required', 'integer', 'min:0', 'max:10000000'],
-            'infant_fare' => ['required', 'integer', 'min:0', 'max:10000000'],
+            // Empty child fare: children pay the adult fare. Empty infant fare: no infants.
+            'child_fare' => ['nullable', 'integer', 'min:0', 'max:10000000'],
+            'infant_fare' => ['nullable', 'integer', 'min:0', 'max:10000000'],
             'supplier_pnr' => ['nullable', 'string', 'max:20'],
             'sourcing' => ['required', Rule::enum(GroupSourcing::class)],
             'supplier_id' => ['nullable', 'required_if:sourcing,'.GroupSourcing::Outsourced->value, 'integer', Rule::exists('suppliers', 'id')],
@@ -45,8 +46,10 @@ class FlightGroupRequest extends FormRequest
             'legs.*.flight_number' => ['required', 'string', 'max:10'],
             'legs.*.origin' => ['required', 'string', 'size:3', 'alpha'],
             'legs.*.destination' => ['required', 'string', 'size:3', 'alpha', 'different:legs.*.origin'],
-            'legs.*.departs_at' => ['required', 'date'],
-            'legs.*.arrives_at' => ['required', 'date'],
+            // A new group can't depart in the past: a mistyped year or day/month swap would
+            // otherwise save it and hide it from the list. Two years ahead is plenty for a block.
+            'legs.*.departs_at' => ['required', 'date', $this->isMethod('post') ? 'after_or_equal:today' : 'after:2020-01-01', 'before:+2 years'],
+            'legs.*.arrives_at' => ['required', 'date', 'after:2020-01-01', 'before:+2 years'],
             'legs.*.baggage' => ['nullable', 'string', 'max:30'],
             'legs.*.meal' => ['boolean'],
         ];
@@ -60,6 +63,11 @@ class FlightGroupRequest extends FormRequest
         return [
             'sector.regex' => 'Write the route as airport codes joined by dashes, e.g. MUX-JED-MUX.',
             'legs.required' => 'Add at least one flight.',
+            'legs.*.departs_at.after_or_equal' => 'This date has already passed. Check the day, month and year.',
+            'legs.*.departs_at.after' => 'Check the day, month and year of this flight.',
+            'legs.*.departs_at.before' => 'This date is more than two years away. Check the year.',
+            'legs.*.arrives_at.after' => 'Check the day, month and year of this flight.',
+            'legs.*.arrives_at.before' => 'This date is more than two years away. Check the year.',
             'supplier_id.required_if' => 'Choose the supplier this group was bought from.',
         ];
     }

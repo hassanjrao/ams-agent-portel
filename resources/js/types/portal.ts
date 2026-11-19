@@ -47,7 +47,8 @@ export type GroupCard = {
     seats_available: number;
     adult_fare: number;
     child_fare: number;
-    infant_fare: number;
+    // Null when the group doesn't take infants.
+    infant_fare: number | null;
     hold_minutes: number;
     notes: string | null;
     bookable: boolean;

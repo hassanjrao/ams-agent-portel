@@ -56,6 +56,9 @@ class BookingService
             if (! $group->isBookable()) {
                 throw ValidationException::withMessages(['group' => 'This group is no longer open for booking.']);
             }
+            if ($infants > 0 && ! $group->takesInfants()) {
+                throw ValidationException::withMessages(['infants' => "This group doesn't take infants."]);
+            }
             $available = $group->seatsAvailable();
             if ($seats > $available) {
                 throw ValidationException::withMessages(['adults' => $available === 0
@@ -74,9 +77,9 @@ class BookingService
             $booking->seats = $seats;
             // Price is always the group's, read here on the server: never taken from the request.
             $booking->adult_fare = $group->adult_fare;
-            $booking->child_fare = $group->child_fare;
-            $booking->infant_fare = $group->infant_fare;
-            $booking->total_amount = $adults * $group->adult_fare + $children * $group->child_fare + $infants * $group->infant_fare;
+            $booking->child_fare = $group->childFare();
+            $booking->infant_fare = $group->infant_fare ?? 0;
+            $booking->total_amount = $adults * $group->adult_fare + $children * $booking->child_fare + $infants * $booking->infant_fare;
             $booking->status = BookingStatus::OnHold;
             $booking->hold_expires_at = now()->addMinutes($group->holdMinutes());
             $booking->agent_remarks = $remarks;

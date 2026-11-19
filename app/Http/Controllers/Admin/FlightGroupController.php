@@ -145,6 +145,15 @@ class FlightGroupController extends Controller
         return back();
     }
 
+    public function destroy(FlightGroup $flightGroup): RedirectResponse
+    {
+        $this->groups->delete($flightGroup);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => "Group {$flightGroup->sector} on {$flightGroup->departure_date->format('d M Y')} deleted."]);
+
+        return to_route('admin.groups.index');
+    }
+
     /**
      * The payment window from the groups list. It applies to holds placed from now on: a hold
      * already running keeps the deadline it was given.

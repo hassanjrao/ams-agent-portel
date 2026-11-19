@@ -78,7 +78,7 @@ const total = computed(
     () =>
         form.adults * props.group.adult_fare +
         form.children * props.group.child_fare +
-        form.infants * props.group.infant_fare,
+        form.infants * (props.group.infant_fare ?? 0),
 );
 
 type Counter = {
@@ -88,7 +88,14 @@ type Counter = {
     hint: string;
     fare: number;
 };
-const counters = computed<Counter[]>(() => [
+// A group without an infant fare doesn't take infants, so it has no infant counter.
+const counters = computed<Counter[]>(() =>
+    allCounters.value.filter(
+        (counter) =>
+            counter.key !== 'infants' || props.group.infant_fare !== null,
+    ),
+);
+const allCounters = computed<Counter[]>(() => [
     {
         key: 'adults',
         type: 'adult',
@@ -108,7 +115,7 @@ const counters = computed<Counter[]>(() => [
         type: 'infant',
         label: 'Infants',
         hint: 'Under 2, on an adult’s lap',
-        fare: props.group.infant_fare,
+        fare: props.group.infant_fare ?? 0,
     },
 ]);
 

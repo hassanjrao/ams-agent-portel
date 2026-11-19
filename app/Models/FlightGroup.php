@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
 /**
@@ -22,8 +23,8 @@ use Illuminate\Support\Carbon;
  * @property int|null $duration_days
  * @property int $total_seats
  * @property int $adult_fare
- * @property int $child_fare
- * @property int $infant_fare
+ * @property int|null $child_fare Empty: children pay the adult fare.
+ * @property int|null $infant_fare Empty: the group doesn't take infants.
  * @property string|null $supplier_pnr
  * @property GroupSourcing $sourcing Admin-only: bought by AMS directly or outsourced.
  * @property int|null $supplier_id Set only when outsourced.
@@ -31,6 +32,7 @@ use Illuminate\Support\Carbon;
  * @property GroupStatus $status
  * @property string|null $notes
  * @property int|null $created_by
+ * @property Carbon|null $deleted_at Deleted from the admin; the row stays for past bookings.
  * @property int|null $seats_taken Only when loaded through withSeatsTaken().
  */
 #[Fillable([
@@ -39,7 +41,7 @@ use Illuminate\Support\Carbon;
 ])]
 class FlightGroup extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     // Bounds of the payment window an admin can set: five minutes to two days.
     public const MIN_HOLD_MINUTES = 5;
@@ -112,6 +114,18 @@ class FlightGroup extends Model
         $taken = $this->seats_taken ?? $this->bookings()->holdingSeats()->sum('seats');
 
         return max(0, $this->total_seats - (int) $taken);
+    }
+
+    // What a child pays: the child fare, or the adult fare when the group has none.
+    public function childFare(): int
+    {
+        return $this->child_fare ?? $this->adult_fare;
+    }
+
+    // Infants can only be booked on a group that has an infant fare.
+    public function takesInfants(): bool
+    {
+        return $this->infant_fare !== null;
     }
 
     public function holdMinutes(): int
