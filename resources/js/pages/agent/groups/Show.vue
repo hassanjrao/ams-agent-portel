@@ -11,6 +11,7 @@ import {
 } from '@lucide/vue';
 import { computed, watch } from 'vue';
 import AirlineMark from '@/components/AirlineMark.vue';
+import CopyGroupButton from '@/components/CopyGroupButton.vue';
 import FlightLegs from '@/components/FlightLegs.vue';
 import InputError from '@/components/InputError.vue';
 import PassengerEditor from '@/components/PassengerEditor.vue';
@@ -184,25 +185,30 @@ const errors = computed(() => form.errors as Partial<Record<string, string>>);
                                 </p>
                             </div>
                         </div>
-                        <div class="text-right text-sm">
-                            <p class="flex items-center gap-1.5 font-semibold">
-                                <CalendarDays class="size-4 text-gold" />
-                                {{ formatWeekday(group.departure_date) }}
-                                {{ formatDate(group.departure_date) }}
-                            </p>
-                            <p
-                                v-if="group.duration_days"
-                                class="text-muted-foreground"
-                            >
-                                {{ group.duration_days }} days<template
-                                    v-if="group.return_date"
+                        <div class="flex items-center gap-3">
+                            <div class="text-right text-sm">
+                                <p
+                                    class="flex items-center gap-1.5 font-semibold"
                                 >
-                                    · back
-                                    {{
-                                        formatDate(group.return_date)
-                                    }}</template
+                                    <CalendarDays class="size-4 text-gold" />
+                                    {{ formatWeekday(group.departure_date) }}
+                                    {{ formatDate(group.departure_date) }}
+                                </p>
+                                <p
+                                    v-if="group.duration_days"
+                                    class="text-muted-foreground"
                                 >
-                            </p>
+                                    {{ group.duration_days }} days<template
+                                        v-if="group.return_date"
+                                    >
+                                        · back
+                                        {{
+                                            formatDate(group.return_date)
+                                        }}</template
+                                    >
+                                </p>
+                            </div>
+                            <CopyGroupButton :group="group" />
                         </div>
                     </div>
                     <div class="p-5">

@@ -10,6 +10,7 @@ import {
     XCircle,
 } from '@lucide/vue';
 import { ref } from 'vue';
+import BookingPdfMenu from '@/components/BookingPdfMenu.vue';
 import BookingTicket from '@/components/BookingTicket.vue';
 import InputError from '@/components/InputError.vue';
 import PassengersPanel from '@/components/PassengersPanel.vue';
@@ -83,6 +84,7 @@ function cancel() {
                 ><ArrowLeft class="size-4" /> Bookings</Link
             >
             <div class="flex flex-wrap gap-2">
+                <BookingPdfMenu :booking-id="booking.id" />
                 <Button
                     v-if="booking.can.cancel"
                     variant="outline"

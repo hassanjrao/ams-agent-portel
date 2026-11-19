@@ -14,6 +14,7 @@ import {
 } from '@lucide/vue';
 import { computed, reactive, ref, watch } from 'vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
+import CopyGroupButton from '@/components/CopyGroupButton.vue';
 import NativeSelect from '@/components/NativeSelect.vue';
 import Pagination from '@/components/Pagination.vue';
 import PaymentWindowDialog from '@/components/PaymentWindowDialog.vue';
@@ -22,7 +23,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { formatDate, formatPKR, formatWeekday } from '@/lib/format';
 import admin from '@/routes/admin';
-import type { Option, Paginated } from '@/types/portal';
+import type { Leg, Option, Paginated } from '@/types/portal';
 
 type GroupRow = {
     id: number;
@@ -38,6 +39,7 @@ type GroupRow = {
     seats_available: number;
     adult_fare: number;
     hold_minutes: number;
+    legs: Leg[];
     sourcing: 'direct' | 'outsourced';
     supplier: string | null;
     status: 'draft' | 'published' | 'closed';
@@ -352,6 +354,7 @@ const closeOpen = computed({
                                         ><Ticket /> Bookings</Link
                                     >
                                 </Button>
+                                <CopyGroupButton :group="group" icon-only />
                                 <Button size="sm" variant="ghost" as-child>
                                     <Link
                                         :href="admin.groups.edit(group.id)"

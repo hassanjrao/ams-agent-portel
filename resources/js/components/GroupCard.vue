@@ -2,6 +2,7 @@
 import { Link } from '@inertiajs/vue3';
 import { ArrowRight, CalendarDays } from '@lucide/vue';
 import AirlineMark from '@/components/AirlineMark.vue';
+import CopyGroupButton from '@/components/CopyGroupButton.vue';
 import FlightLegs from '@/components/FlightLegs.vue';
 import SeatsMeter from '@/components/SeatsMeter.vue';
 import { Button } from '@/components/ui/button';
@@ -33,10 +34,13 @@ defineProps<{ group: GroupCard }>();
                         </p>
                     </div>
                 </div>
-                <span
-                    class="shrink-0 rounded-full bg-sand px-2.5 py-1 text-[11px] font-semibold text-ink-soft dark:bg-secondary dark:text-muted-foreground"
-                    >{{ group.group_type }}</span
-                >
+                <div class="flex shrink-0 items-center gap-2">
+                    <span
+                        class="rounded-full bg-sand px-2.5 py-1 text-[11px] font-semibold text-ink-soft dark:bg-secondary dark:text-muted-foreground"
+                        >{{ group.group_type }}</span
+                    >
+                    <CopyGroupButton :group="group" />
+                </div>
             </div>
 
             <div

@@ -9,6 +9,7 @@ import {
 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import BankAccountCard from '@/components/BankAccountCard.vue';
+import BookingPdfMenu from '@/components/BookingPdfMenu.vue';
 import BookingTicket from '@/components/BookingTicket.vue';
 import PassengersPanel from '@/components/PassengersPanel.vue';
 import PaymentDialog from '@/components/PaymentDialog.vue';
@@ -96,6 +97,7 @@ function print() {
                 <Button variant="ghost" @click="print"
                     ><Printer /> Print</Button
                 >
+                <BookingPdfMenu :booking-id="booking.id" />
                 <Button
                     v-if="booking.can.cancel"
                     variant="outline"

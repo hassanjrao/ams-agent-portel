@@ -9,8 +9,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\FlightGroupRequest;
 use App\Models\Airline;
 use App\Models\FlightGroup;
+use App\Models\FlightGroupLeg;
 use App\Models\GroupType;
 use App\Models\Supplier;
+use App\Presenters\GroupPresenter;
 use App\Services\FlightGroupService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -36,7 +38,7 @@ class FlightGroupController extends Controller
         ]);
 
         $groups = FlightGroup::query()
-            ->with(['airline:id,name,code', 'groupType:id,name', 'supplier:id,name'])
+            ->with(['airline:id,name,code', 'groupType:id,name', 'supplier:id,name', 'legs'])
             ->withSeatsTaken()
             ->withSum(['bookings as seats_confirmed' => fn (Builder $q) => $q->where('status', BookingStatus::Confirmed)], 'seats')
             ->when($filters['type'] ?? null, fn (Builder $q, $type) => $q->where('group_type_id', $type))
@@ -68,6 +70,8 @@ class FlightGroupController extends Controller
                 'seats_available' => $g->seatsAvailable(),
                 'adult_fare' => $g->adult_fare,
                 'hold_minutes' => $g->holdMinutes(),
+                // For the Copy button: the flights as agencies see them.
+                'legs' => $g->legs->map(fn (FlightGroupLeg $leg) => GroupPresenter::leg($leg))->all(),
                 'sourcing' => $g->sourcing->value,
                 'supplier' => $g->supplier?->name,
                 'status' => $g->status->value,
