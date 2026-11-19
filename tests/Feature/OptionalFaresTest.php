@@ -82,6 +82,21 @@ class OptionalFaresTest extends TestCase
                 ->where('group.infant_fare', null));
     }
 
+    public function test_a_flight_cannot_land_on_a_day_before_it_departs(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $departs = now()->addDays(11)->setTime(10, 58);
+
+        $this->actingAs($admin)->post('/admin/groups', $this->payload($departs->format('Y-m-d\TH:i'), [
+            'legs' => [['flight_number' => 'SV801', 'origin' => 'MUX', 'destination' => 'JED', 'departs_at' => $departs->format('Y-m-d\TH:i'), 'arrives_at' => $departs->copy()->subDays(11)->setTime(15, 24)->format('Y-m-d\TH:i')]],
+        ]))->assertSessionHasErrors('legs.0.arrives_at');
+
+        // Same day at an earlier clock time is fine: a westbound flight across time zones.
+        $this->actingAs($admin)->post('/admin/groups', $this->payload($departs->format('Y-m-d\TH:i'), [
+            'legs' => [['flight_number' => 'PK701', 'origin' => 'LHE', 'destination' => 'JED', 'departs_at' => $departs->format('Y-m-d\TH:i'), 'arrives_at' => $departs->copy()->setTime(9, 30)->format('Y-m-d\TH:i')]],
+        ]))->assertSessionHasNoErrors();
+    }
+
     public function test_a_new_group_cannot_depart_in_the_past_or_years_ahead(): void
     {
         $admin = User::factory()->admin()->create();

@@ -163,6 +163,22 @@ const earliest = (() => {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 })();
 
+// The arrival picker starts at the flight's departure date (or today, before one is picked).
+function arrivalMin(leg: Leg): string {
+    const departs = leg.departs_at.slice(0, 10);
+
+    return departs > earliest ? departs : earliest;
+}
+
+// Dates only: in local time a short westbound flight can land at an earlier clock time.
+function landsBeforeDeparture(leg: Leg): boolean {
+    return (
+        !!leg.departs_at &&
+        !!leg.arrives_at &&
+        leg.arrives_at.slice(0, 10) < leg.departs_at.slice(0, 10)
+    );
+}
+
 function isPast(value: string): boolean {
     const date = new Date(value);
     const today = new Date();
@@ -402,13 +418,21 @@ function submit() {
                     <DateTime24Input
                         :id="`arr-${index}`"
                         v-model="leg.arrives_at"
-                        :min="earliest"
+                        :min="arrivalMin(leg)"
                     />
                     <p
                         v-if="leg.arrives_at"
-                        class="text-xs font-medium text-muted-foreground"
+                        class="text-xs font-medium"
+                        :class="
+                            landsBeforeDeparture(leg)
+                                ? 'text-destructive'
+                                : 'text-muted-foreground'
+                        "
                     >
                         {{ spellDate(leg.arrives_at) }}
+                        <template v-if="landsBeforeDeparture(leg)">
+                            · before the departure date</template
+                        >
                     </p>
                     <InputError :message="legError(index, 'arrives_at')" />
                 </div>

@@ -7,7 +7,9 @@ use App\Enums\GroupStatus;
 use App\Models\FlightGroup;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class FlightGroupRequest extends FormRequest
 {
@@ -53,6 +55,28 @@ class FlightGroupRequest extends FormRequest
             'legs.*.baggage' => ['nullable', 'string', 'max:30'],
             'legs.*.meal' => ['boolean'],
         ];
+    }
+
+    /**
+     * A flight can't land on a day before it took off. Only the dates are compared: in local time a
+     * short westbound flight can land at an earlier clock time than it left.
+     *
+     * @return list<callable(Validator): void>
+     */
+    public function after(): array
+    {
+        return [function (Validator $validator): void {
+            foreach ((array) $this->input('legs', []) as $i => $leg) {
+                $departs = $leg['departs_at'] ?? null;
+                $arrives = $leg['arrives_at'] ?? null;
+                if (! is_string($departs) || ! is_string($arrives) || strtotime($departs) === false || strtotime($arrives) === false) {
+                    continue;
+                }
+                if (Carbon::parse($arrives)->startOfDay()->lt(Carbon::parse($departs)->startOfDay())) {
+                    $validator->errors()->add("legs.{$i}.arrives_at", "The arrival date can't be before the departure date.");
+                }
+            }
+        }];
     }
 
     /**
