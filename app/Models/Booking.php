@@ -45,6 +45,20 @@ class Booking extends Model
             'hold_expires_at' => 'datetime',
             'confirmed_at' => 'datetime',
             'cancelled_at' => 'datetime',
+            'agency_id' => 'integer',
+            'user_id' => 'integer',
+            'flight_group_id' => 'integer',
+            'adults' => 'integer',
+            'children' => 'integer',
+            'infants' => 'integer',
+            'seats' => 'integer',
+            'adult_fare' => 'integer',
+            'child_fare' => 'integer',
+            'infant_fare' => 'integer',
+            'discount_amount' => 'integer',
+            'total_amount' => 'integer',
+            'confirmed_by' => 'integer',
+            'cancelled_by' => 'integer',
         ];
     }
 

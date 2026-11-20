@@ -34,6 +34,8 @@ class Agency extends Model
         return [
             'status' => AgencyStatus::class,
             'approved_at' => 'datetime',
+            'approved_by' => 'integer',
+            'bookings_count' => 'integer',
         ];
     }
 

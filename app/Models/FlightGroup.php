@@ -56,6 +56,19 @@ class FlightGroup extends Model
             'sourcing' => GroupSourcing::class,
             'departure_date' => 'date',
             'return_date' => 'date',
+            'group_type_id' => 'integer',
+            'airline_id' => 'integer',
+            'supplier_id' => 'integer',
+            'duration_days' => 'integer',
+            'total_seats' => 'integer',
+            'adult_fare' => 'integer',
+            'child_fare' => 'integer',
+            'infant_fare' => 'integer',
+            'discount_per_booking' => 'integer',
+            'hold_minutes' => 'integer',
+            'created_by' => 'integer',
+            'seats_taken' => 'integer',
+            'seats_confirmed' => 'integer',
         ];
     }
 

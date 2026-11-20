@@ -30,6 +30,7 @@ class BookingPassenger extends Model
             'type' => PassengerType::class,
             'date_of_birth' => 'date',
             'passport_expiry' => 'date',
+            'booking_id' => 'integer',
         ];
     }
 

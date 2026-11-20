@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Info } from '@lucide/vue';
 import InputError from '@/components/InputError.vue';
 import NativeSelect from '@/components/NativeSelect.vue';
 import { Input } from '@/components/ui/input';
@@ -6,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { passengerLabel, TITLES } from '@/lib/passengers';
 import type { PassengerDraft } from '@/types/portal';
 
-// One row per passenger: names as printed in the passport, passport details optional.
+// One row per passenger: names as printed in the passport. Everything is optional: an empty
+// row is a passenger whose details come later.
 // AMS staff also see a ticket number column.
 const passengers = defineModel<PassengerDraft[]>({ required: true });
 
@@ -26,6 +28,18 @@ function err(
 
 <template>
     <div class="flex flex-col gap-3">
+        <p
+            class="flex items-start gap-2 rounded-xl bg-sand/70 px-3.5 py-2.5 text-xs text-ink-soft dark:bg-secondary dark:text-muted-foreground"
+        >
+            <Info class="mt-px size-4 shrink-0 text-gold-dark" />
+            <span>
+                <strong class="text-foreground"
+                    >All passenger details are optional.</strong
+                >
+                Add what you have now, and fill in or correct the rest any time
+                from the booking. Leave a passenger empty to add them later.
+            </span>
+        </p>
         <div
             v-for="(passenger, i) in passengers"
             :key="i"

@@ -29,6 +29,12 @@ class LedgerEntry extends Model
         return [
             'type' => LedgerEntryType::class,
             'entry_date' => 'date',
+            'agency_id' => 'integer',
+            'debit' => 'integer',
+            'credit' => 'integer',
+            'booking_id' => 'integer',
+            'payment_id' => 'integer',
+            'created_by' => 'integer',
         ];
     }
 

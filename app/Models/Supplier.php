@@ -26,7 +26,10 @@ class Supplier extends Model
 
     protected function casts(): array
     {
-        return ['is_active' => 'boolean'];
+        return [
+            'is_active' => 'boolean',
+            'flight_groups_count' => 'integer',
+        ];
     }
 
     /** @return HasMany<FlightGroup, $this> */

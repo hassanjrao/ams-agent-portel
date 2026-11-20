@@ -32,6 +32,12 @@ class Payment extends Model
             'status' => PaymentStatus::class,
             'paid_on' => 'date',
             'reviewed_at' => 'datetime',
+            'agency_id' => 'integer',
+            'user_id' => 'integer',
+            'booking_id' => 'integer',
+            'bank_account_id' => 'integer',
+            'amount' => 'integer',
+            'reviewed_by' => 'integer',
         ];
     }
 

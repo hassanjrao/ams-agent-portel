@@ -42,7 +42,7 @@ class PaymentController extends Controller
         return Inertia::render('admin/payments/Index', [
             'payments' => $payments->through(fn (Payment $p) => PaymentPresenter::row($p)),
             'filters' => [...$filters, 'status' => $status],
-            'counts' => Payment::query()->selectRaw('status, COUNT(*) AS total')->groupBy('status')->pluck('total', 'status'),
+            'counts' => Payment::query()->selectRaw('status, COUNT(*) AS total')->groupBy('status')->pluck('total', 'status')->map(fn ($n) => (int) $n),
         ]);
     }
 

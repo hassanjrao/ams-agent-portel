@@ -28,6 +28,8 @@ class FlightGroupLeg extends Model
             'departs_at' => 'datetime',
             'arrives_at' => 'datetime',
             'meal' => 'boolean',
+            'flight_group_id' => 'integer',
+            'sort_order' => 'integer',
         ];
     }
 
