@@ -49,6 +49,8 @@ export type GroupCard = {
     child_fare: number;
     // Null when the group doesn't take infants.
     infant_fare: number | null;
+    // Flat PKR off each booking on this group; 0 when there is none.
+    discount: number;
     hold_minutes: number;
     notes: string | null;
     bookable: boolean;
@@ -126,6 +128,8 @@ export type BookingDetail = Omit<BookingRow, 'agency' | 'passengers'> & {
     adult_fare: number;
     child_fare: number;
     infant_fare: number;
+    // Already taken off total_amount.
+    discount_amount: number;
     seats: number;
     hold_expires_at: string | null;
     confirmed_at: string | null;

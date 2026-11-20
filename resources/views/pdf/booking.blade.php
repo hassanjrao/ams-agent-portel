@@ -115,7 +115,7 @@
                 @forelse ($passengers as $i => $p)
                     <tr>
                         <td>{{ $i + 1 }}</td>
-                        <td class="strong">{{ $p['name'] }}</td>
+                        <td class="strong">@if ($p['name']){{ $p['name'] }}@else<span class="muted" style="font-weight: normal;">Name to be added</span>@endif</td>
                         <td>{{ $p['type'] }}</td>
                         <td>
                             @if ($p['passport'])
@@ -146,6 +146,12 @@
                         <td class="num">{{ $money($fare['count'] * $fare['fare']) }}</td>
                     </tr>
                 @endforeach
+                @if ($discount > 0)
+                    <tr>
+                        <td colspan="2">Discount</td>
+                        <td class="num">- {{ $money($discount) }}</td>
+                    </tr>
+                @endif
                 <tr class="total">
                     <td colspan="2">Total</td>
                     <td class="num">{{ $money($total) }}</td>

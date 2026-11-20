@@ -38,6 +38,7 @@ type GroupRow = {
     seats_held: number;
     seats_available: number;
     adult_fare: number;
+    discount: number;
     hold_minutes: number;
     legs: Leg[];
     sourcing: 'direct' | 'outsourced';
@@ -310,6 +311,12 @@ const closeOpen = computed({
                             class="px-4 py-3 text-right whitespace-nowrap tabular-nums"
                         >
                             {{ formatPKR(group.adult_fare) }}
+                            <div
+                                v-if="group.discount > 0"
+                                class="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400"
+                            >
+                                −{{ formatPKR(group.discount) }} / booking
+                            </div>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap">
                             <button

@@ -25,6 +25,7 @@ use Illuminate\Support\Carbon;
  * @property int $adult_fare
  * @property int|null $child_fare Empty: children pay the adult fare.
  * @property int|null $infant_fare Empty: the group doesn't take infants.
+ * @property int $discount_per_booking Flat amount taken off every booking on the group.
  * @property string|null $supplier_pnr
  * @property GroupSourcing $sourcing Admin-only: bought by AMS directly or outsourced.
  * @property int|null $supplier_id Set only when outsourced.
@@ -37,7 +38,7 @@ use Illuminate\Support\Carbon;
  */
 #[Fillable([
     'group_type_id', 'airline_id', 'sector', 'departure_date', 'return_date', 'duration_days',
-    'total_seats', 'adult_fare', 'child_fare', 'infant_fare', 'supplier_pnr', 'sourcing', 'supplier_id', 'hold_minutes', 'status', 'notes',
+    'total_seats', 'adult_fare', 'child_fare', 'infant_fare', 'discount_per_booking', 'supplier_pnr', 'sourcing', 'supplier_id', 'hold_minutes', 'status', 'notes',
 ])]
 class FlightGroup extends Model
 {

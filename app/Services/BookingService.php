@@ -5,10 +5,12 @@ namespace App\Services;
 use App\Enums\BookingStatus;
 use App\Enums\PassengerType;
 use App\Models\Booking;
+use App\Models\BookingPassenger;
 use App\Models\FlightGroup;
 use App\Models\User;
 use App\Notifications\BookingCancelled;
 use App\Notifications\BookingConfirmed;
+use App\Notifications\PassengersChanged;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
@@ -43,6 +45,7 @@ class BookingService
         if ($infants > $adults) {
             throw ValidationException::withMessages(['infants' => 'Each infant must travel with an adult.']);
         }
+        $passengers = array_values($passengers);
         if ($passengers) {
             self::assertPassengersMatch($passengers, $adults, $children, $infants);
         }
@@ -79,7 +82,10 @@ class BookingService
             $booking->adult_fare = $group->adult_fare;
             $booking->child_fare = $group->childFare();
             $booking->infant_fare = $group->infant_fare ?? 0;
-            $booking->total_amount = $adults * $group->adult_fare + $children * $booking->child_fare + $infants * $booking->infant_fare;
+            $gross = $adults * $group->adult_fare + $children * $booking->child_fare + $infants * $booking->infant_fare;
+            // The group's flat discount comes off the booking, never below zero; the booking keeps it.
+            $booking->discount_amount = min((int) $group->discount_per_booking, $gross);
+            $booking->total_amount = $gross - $booking->discount_amount;
             $booking->status = BookingStatus::OnHold;
             $booking->hold_expires_at = now()->addMinutes($group->holdMinutes());
             $booking->agent_remarks = $remarks;
@@ -109,16 +115,28 @@ class BookingService
                 if (! in_array($booking->status, [BookingStatus::OnHold, BookingStatus::Confirmed], true)) {
                     throw ValidationException::withMessages(['passengers' => "Passengers can't be changed on a {$booking->status->label()} booking."]);
                 }
-            } elseif (! $booking->isHoldActive()) {
-                throw ValidationException::withMessages(['passengers' => $booking->status === BookingStatus::Confirmed
-                    ? 'This booking is confirmed. Please contact AMS to change a name.'
-                    : 'Names can only be changed while the booking is on hold.']);
+            } elseif (! $booking->isHoldActive() && $booking->status !== BookingStatus::Confirmed) {
+                throw ValidationException::withMessages(['passengers' => "Names can't be changed on a {$booking->status->label()} booking."]);
             }
 
+            $passengers = array_values($passengers);
             self::assertPassengersMatch($passengers, $booking->adults, $booking->children, $booking->infants);
 
+            // An agency can't set ticket numbers, so its edit keeps the ones AMS entered, in order.
+            $tickets = $by->isAdmin() ? [] : $booking->passengers()->orderBy('id')->get()
+                ->groupBy(fn (BookingPassenger $p) => $p->type->value)
+                ->map(fn ($group) => $group->pluck('ticket_number')->all())
+                ->all();
+
+            $before = $this->nameList($booking);
             $booking->passengers()->delete();
-            $this->writePassengers($booking, $passengers, withTickets: $by->isAdmin());
+            $this->writePassengers($booking, $passengers, withTickets: $by->isAdmin(), keepTickets: $tickets);
+
+            // Names changed after confirmation may not match tickets already issued: tell AMS.
+            if (! $by->isAdmin() && $booking->status === BookingStatus::Confirmed && $before !== $this->nameList($booking)) {
+                $booking->load(['agency', 'flightGroup']);
+                Notification::send(User::query()->admins()->get(), new PassengersChanged($booking));
+            }
 
             if ($by->isAdmin() && $pnr !== null) {
                 $booking->pnr = $pnr ?: null;
@@ -235,23 +253,39 @@ class BookingService
     {
         $counts = array_count_values(array_map(fn (array $p) => (string) ($p['type'] ?? ''), $passengers));
 
+        // Names are optional, so fewer than the booking's passengers is fine; more is not.
         foreach ([PassengerType::Adult->value => $adults, PassengerType::Child->value => $children, PassengerType::Infant->value => $infants] as $type => $expected) {
-            if (($counts[$type] ?? 0) !== $expected) {
-                throw ValidationException::withMessages(['passengers' => "Enter exactly {$expected} {$type} ".($expected === 1 ? 'name' : 'names').'.']);
+            if (($counts[$type] ?? 0) > $expected) {
+                throw ValidationException::withMessages(['passengers' => "This booking has {$expected} {$type} ".($expected === 1 ? 'place' : 'places').'.']);
             }
         }
     }
 
     /**
-     * @param  list<array<string, mixed>>  $passengers
+     * Who is on the booking, for spotting whether an edit changed anything.
+     *
+     * @return list<string>
      */
-    private function writePassengers(Booking $booking, array $passengers, bool $withTickets): void
+    private function nameList(Booking $booking): array
+    {
+        return $booking->passengers()->orderBy('id')->get()
+            ->map(fn (BookingPassenger $p) => "{$p->type->value}|{$p->title}|{$p->given_name}|{$p->surname}")
+            ->all();
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $passengers
+     * @param  array<string, list<string|null>>  $keepTickets  ticket numbers to carry over, by type and position
+     */
+    private function writePassengers(Booking $booking, array $passengers, bool $withTickets, array $keepTickets = []): void
     {
         // Adults first, then children, then infants: the order airlines list them on a PNR.
         $order = [PassengerType::Adult->value => 0, PassengerType::Child->value => 1, PassengerType::Infant->value => 2];
         usort($passengers, fn (array $a, array $b) => $order[$a['type']] <=> $order[$b['type']]);
 
+        $seen = [];
         foreach ($passengers as $p) {
+            $position = $seen[$p['type']] = ($seen[$p['type']] ?? -1) + 1;
             $passenger = $booking->passengers()->make([
                 'type' => $p['type'],
                 'title' => $p['title'],
@@ -264,6 +298,8 @@ class BookingService
             ]);
             if ($withTickets) {
                 $passenger->ticket_number = $p['ticket_number'] ?? null ?: null;
+            } else {
+                $passenger->ticket_number = $keepTickets[$p['type']][$position] ?? null;
             }
             $passenger->save();
         }

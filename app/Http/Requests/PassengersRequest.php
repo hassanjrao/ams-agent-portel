@@ -12,6 +12,11 @@ class PassengersRequest extends FormRequest
 {
     use PassengerRules;
 
+    protected function prepareForValidation(): void
+    {
+        $this->dropEmptyPassengers();
+    }
+
     /**
      * @return array<string, mixed>
      */

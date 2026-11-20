@@ -75,12 +75,15 @@ const seats = computed(
         form.children +
         (props.infantsTakeSeat ? form.infants : 0),
 );
-const total = computed(
+const subtotal = computed(
     () =>
         form.adults * props.group.adult_fare +
         form.children * props.group.child_fare +
         form.infants * (props.group.infant_fare ?? 0),
 );
+// The group's flat discount comes off the whole booking, as the server works it out.
+const discount = computed(() => Math.min(props.group.discount, subtotal.value));
+const total = computed(() => subtotal.value - discount.value);
 
 type Counter = {
     key: 'adults' | 'children' | 'infants';
@@ -229,8 +232,9 @@ const errors = computed(() => form.errors as Partial<Record<string, string>>);
                         Passengers
                     </h2>
                     <p class="mt-1 text-sm text-muted-foreground">
-                        Names exactly as in the passport. You can correct them
-                        while the booking is on hold.
+                        Names are optional now: hold the seats first and add or
+                        correct names any time from the booking. Enter them
+                        exactly as in the passport.
                     </p>
 
                     <div class="mt-4 grid gap-3 sm:grid-cols-3">
@@ -336,6 +340,15 @@ const errors = computed(() => form.errors as Partial<Record<string, string>>);
                         </dt>
                         <dd class="font-semibold tabular-nums">
                             {{ formatPKR(form[counter.key] * counter.fare) }}
+                        </dd>
+                    </div>
+                    <div
+                        v-if="discount > 0"
+                        class="flex justify-between gap-2 text-emerald-700 dark:text-emerald-400"
+                    >
+                        <dt>Discount</dt>
+                        <dd class="font-semibold tabular-nums">
+                            − {{ formatPKR(discount) }}
                         </dd>
                     </div>
                 </dl>

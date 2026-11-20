@@ -37,6 +37,8 @@ class FlightGroupRequest extends FormRequest
             // Empty child fare: children pay the adult fare. Empty infant fare: no infants.
             'child_fare' => ['nullable', 'integer', 'min:0', 'max:10000000'],
             'infant_fare' => ['nullable', 'integer', 'min:0', 'max:10000000'],
+            // Flat PKR off every booking on the group, for every agency.
+            'discount_per_booking' => ['nullable', 'integer', 'min:0', 'max:10000000'],
             'supplier_pnr' => ['nullable', 'string', 'max:20'],
             'sourcing' => ['required', Rule::enum(GroupSourcing::class)],
             'supplier_id' => ['nullable', 'required_if:sourcing,'.GroupSourcing::Outsourced->value, 'integer', Rule::exists('suppliers', 'id')],
@@ -108,6 +110,7 @@ class FlightGroupRequest extends FormRequest
             'duration_days' => 'days',
             'supplier_pnr' => 'airline PNR',
             'supplier_id' => 'supplier',
+            'discount_per_booking' => 'discount',
             'hold_minutes' => 'payment window',
             'legs.*.flight_number' => 'flight number',
             'legs.*.origin' => 'from',
@@ -126,6 +129,7 @@ class FlightGroupRequest extends FormRequest
     public function groupAttributes(): array
     {
         $attributes = collect($this->validated())->except('legs')->all();
+        $attributes['discount_per_booking'] = (int) ($attributes['discount_per_booking'] ?? 0);
         // A direct group has no supplier, whatever the form still held.
         if ($attributes['sourcing'] === GroupSourcing::Direct->value) {
             $attributes['supplier_id'] = null;

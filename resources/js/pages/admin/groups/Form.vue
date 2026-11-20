@@ -32,6 +32,7 @@ type Group = {
     adult_fare: number;
     child_fare: number | null;
     infant_fare: number | null;
+    discount_per_booking: number;
     supplier_pnr: string | null;
     sourcing: 'direct' | 'outsourced';
     supplier_id: number | null;
@@ -79,6 +80,8 @@ const form = useForm({
     adult_fare: props.group?.adult_fare ?? '',
     child_fare: props.group?.child_fare ?? '',
     infant_fare: props.group?.infant_fare ?? '',
+    discount_per_booking:
+        props.group?.discount_per_booking || ('' as number | ''),
     supplier_pnr: props.group?.supplier_pnr ?? '',
     sourcing: props.group?.sourcing ?? 'direct',
     supplier_id: props.group?.supplier_id ?? ('' as number | ''),
@@ -532,6 +535,23 @@ function submit() {
         </section>
 
         <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="grid gap-2">
+                <Label for="discount_per_booking"
+                    >Discount per booking (PKR)</Label
+                >
+                <Input
+                    id="discount_per_booking"
+                    v-model="form.discount_per_booking"
+                    type="number"
+                    min="0"
+                    placeholder="No discount"
+                />
+                <p class="text-xs text-muted-foreground">
+                    Optional. Taken off every booking on this group, for every
+                    agency.
+                </p>
+                <InputError :message="form.errors.discount_per_booking" />
+            </div>
             <div class="grid gap-2">
                 <Label for="supplier_pnr">Airline PNR (admin only)</Label>
                 <Input

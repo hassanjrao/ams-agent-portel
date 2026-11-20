@@ -69,6 +69,38 @@ function save() {
 }
 
 const errors = computed(() => form.errors as Partial<Record<string, string>>);
+
+// Passengers booked without a name yet.
+const missing = computed(
+    () =>
+        props.booking.adults +
+        props.booking.children +
+        props.booking.infants -
+        props.booking.passengers.length,
+);
+
+// Placeholder rows for them, by type, after the named passengers of that type.
+const unnamed = computed(() => {
+    const counts = {
+        adult: props.booking.adults,
+        child: props.booking.children,
+        infant: props.booking.infants,
+    };
+
+    return (['adult', 'child', 'infant'] as const).flatMap((type) =>
+        Array.from(
+            {
+                length: Math.max(
+                    0,
+                    counts[type] -
+                        props.booking.passengers.filter((p) => p.type === type)
+                            .length,
+                ),
+            },
+            () => type,
+        ),
+    );
+});
 </script>
 
 <template>
@@ -83,8 +115,10 @@ const errors = computed(() => form.errors as Partial<Record<string, string>>);
                         staff
                             ? 'Names, PNR and ticket numbers.'
                             : booking.can.edit_passengers
-                              ? 'You can correct names until the hold ends.'
-                              : 'Names are locked. Contact AMS to change one.'
+                              ? missing > 0
+                                  ? `${missing} ${missing === 1 ? 'name' : 'names'} still to add.`
+                                  : 'You can add or correct names any time.'
+                              : 'Names can no longer be changed.'
                     }}
                 </p>
             </div>
@@ -131,7 +165,10 @@ const errors = computed(() => form.errors as Partial<Record<string, string>>);
         </form>
 
         <template v-else>
-            <div v-if="booking.passengers.length" class="overflow-x-auto">
+            <div
+                v-if="booking.passengers.length || unnamed.length"
+                class="overflow-x-auto"
+            >
                 <table class="data-table">
                     <thead>
                         <tr>
@@ -171,6 +208,18 @@ const errors = computed(() => form.errors as Partial<Record<string, string>>);
                                 {{ p.ticket_number ?? '—' }}
                             </td>
                         </tr>
+                        <tr
+                            v-for="(type, i) in unnamed"
+                            :key="`unnamed-${i}`"
+                            class="text-muted-foreground"
+                        >
+                            <td>{{ booking.passengers.length + i + 1 }}</td>
+                            <td class="italic">Name not added yet</td>
+                            <td>{{ titleCase(type) }}</td>
+                            <td>—</td>
+                            <td>—</td>
+                            <td>—</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -178,7 +227,7 @@ const errors = computed(() => form.errors as Partial<Record<string, string>>);
                 v-else
                 :icon="UserRound"
                 title="No names yet"
-                description="Add passenger names before the booking is confirmed."
+                description="Add passenger names any time; AMS needs them before tickets are issued."
             />
         </template>
     </section>

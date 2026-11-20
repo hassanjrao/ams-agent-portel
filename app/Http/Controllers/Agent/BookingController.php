@@ -63,7 +63,8 @@ class BookingController extends Controller
             (int) $data['children'],
             (int) $data['infants'],
             $data['remarks'] ?? null,
-            $data['passengers'],
+            // Names are optional: the agency can add them later.
+            $data['passengers'] ?? [],
         );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "Seats held: {$booking->reference}. Send payment before the hold runs out."]);
@@ -87,7 +88,7 @@ class BookingController extends Controller
     {
         Gate::authorize('update', $booking);
 
-        $this->bookings->updatePassengers($booking, $request->validated('passengers'), $request->user());
+        $this->bookings->updatePassengers($booking, $request->validated('passengers') ?? [], $request->user());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Passenger names saved.']);
 

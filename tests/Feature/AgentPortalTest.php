@@ -101,11 +101,11 @@ class AgentPortalTest extends TestCase
         $this->assertSame(7, $this->group->fresh()->seatsAvailable());
     }
 
-    public function test_names_must_match_the_passenger_counts(): void
+    public function test_names_cannot_outnumber_the_passengers_and_must_be_latin(): void
     {
         $this->actingAs($this->agent)->post("/groups/{$this->group->id}/bookings", [
-            'adults' => 2, 'children' => 0, 'infants' => 0,
-            'passengers' => $this->names(1),
+            'adults' => 1, 'children' => 0, 'infants' => 0,
+            'passengers' => $this->names(2),
         ])->assertSessionHasErrors('passengers');
 
         $this->actingAs($this->agent)->post("/groups/{$this->group->id}/bookings", [
@@ -152,7 +152,7 @@ class AgentPortalTest extends TestCase
         $this->actingAs($this->admin)->get("/payments/{$payment->id}/receipt")->assertOk();
     }
 
-    public function test_names_can_be_changed_only_while_the_hold_runs(): void
+    public function test_names_can_be_changed_on_a_hold_and_after_confirmation(): void
     {
         $booking = $this->book(adults: 1);
         $rename = ['passengers' => [['type' => 'adult', 'title' => 'MRS', 'given_name' => 'Ayesha', 'surname' => 'Bibi']]];
@@ -162,7 +162,9 @@ class AgentPortalTest extends TestCase
 
         app(BookingService::class)->confirm($booking, $this->admin);
 
-        $this->actingAs($this->agent)->put("/bookings/{$booking->id}/passengers", $rename)->assertSessionHasErrors('passengers');
+        $rename['passengers'][0]['given_name'] = 'Aisha';
+        $this->actingAs($this->agent)->put("/bookings/{$booking->id}/passengers", $rename)->assertSessionHasNoErrors();
+        $this->assertSame('AISHA', $booking->passengers()->first()->given_name);
     }
 
     public function test_an_agent_releases_its_own_hold(): void

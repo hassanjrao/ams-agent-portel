@@ -93,6 +93,12 @@ defineProps<{ group: GroupCard }>();
                     <template v-else>No infants</template>
                 </p>
             </div>
+            <p
+                v-if="group.discount > 0"
+                class="-mt-2 w-fit rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300"
+            >
+                {{ formatPKR(group.discount) }} off per booking
+            </p>
             <SeatsMeter
                 :available="group.seats_available"
                 :total="group.total_seats"

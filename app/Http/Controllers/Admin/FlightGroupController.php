@@ -69,6 +69,7 @@ class FlightGroupController extends Controller
                 'seats_held' => (int) $g->seats_taken - (int) $g->seats_confirmed,
                 'seats_available' => $g->seatsAvailable(),
                 'adult_fare' => $g->adult_fare,
+                'discount' => (int) $g->discount_per_booking,
                 'hold_minutes' => $g->holdMinutes(),
                 // For the Copy button: the flights as agencies see them.
                 'legs' => $g->legs->map(fn (FlightGroupLeg $leg) => GroupPresenter::leg($leg))->all(),
@@ -108,7 +109,7 @@ class FlightGroupController extends Controller
             'group' => [
                 ...$flightGroup->only([
                     'id', 'group_type_id', 'airline_id', 'sector', 'duration_days', 'total_seats',
-                    'adult_fare', 'child_fare', 'infant_fare', 'supplier_pnr', 'supplier_id', 'hold_minutes', 'notes',
+                    'adult_fare', 'child_fare', 'infant_fare', 'discount_per_booking', 'supplier_pnr', 'supplier_id', 'hold_minutes', 'notes',
                 ]),
                 'sourcing' => $flightGroup->sourcing->value,
                 'status' => $flightGroup->status->value,

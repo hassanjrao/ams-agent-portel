@@ -53,6 +53,7 @@ class BookingPresenter
             'adult_fare' => $booking->adult_fare,
             'child_fare' => $booking->child_fare,
             'infant_fare' => $booking->infant_fare,
+            'discount_amount' => (int) $booking->discount_amount,
             'seats' => $booking->seats,
             'hold_expires_at' => $booking->hold_expires_at?->toIso8601String(),
             'confirmed_at' => $booking->confirmed_at?->toIso8601String(),
@@ -77,9 +78,10 @@ class BookingPresenter
             'payments' => $booking->payments->map(fn (Payment $p) => PaymentPresenter::row($p))->all(),
             'can' => [
                 // An agency edits names and cancels only while its hold runs; AMS until it's cancelled.
+                // Agencies may add or change names any time on a running hold or a confirmed booking.
                 'edit_passengers' => $viewer->isAdmin()
                     ? in_array($booking->status, [BookingStatus::OnHold, BookingStatus::Confirmed], true)
-                    : $holdActive && $agencyMayAct,
+                    : ($holdActive || $booking->status === BookingStatus::Confirmed) && $agencyMayAct,
                 'cancel' => $viewer->isAdmin()
                     ? in_array($booking->status, [BookingStatus::OnHold, BookingStatus::Confirmed], true)
                     : $holdActive && $agencyMayAct,

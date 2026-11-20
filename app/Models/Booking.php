@@ -24,6 +24,7 @@ use Illuminate\Support\Carbon;
  * @property int $adult_fare
  * @property int $child_fare
  * @property int $infant_fare
+ * @property int $discount_amount The group's discount this booking got, already taken off total_amount.
  * @property int $total_amount
  * @property BookingStatus $status
  * @property Carbon|null $hold_expires_at

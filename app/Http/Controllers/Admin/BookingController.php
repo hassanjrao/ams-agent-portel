@@ -101,7 +101,7 @@ class BookingController extends Controller
     {
         $pnr = $request->validated('pnr');
 
-        $this->bookings->updatePassengers($booking, $request->validated('passengers'), $request->user(), $pnr === null ? '' : strtoupper($pnr));
+        $this->bookings->updatePassengers($booking, $request->validated('passengers') ?? [], $request->user(), $pnr === null ? '' : strtoupper($pnr));
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Passengers and ticketing saved.']);
 

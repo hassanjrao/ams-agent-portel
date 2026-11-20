@@ -7,6 +7,7 @@ use Illuminate\Validation\Rule;
 
 /**
  * Passenger names as airlines take them: Latin letters only, as printed in the passport.
+ * Names are optional: a row left completely empty is a passenger whose name comes later.
  */
 trait PassengerRules
 {
@@ -20,7 +21,7 @@ trait PassengerRules
         $name = ['required', 'string', 'max:60', "regex:/^[A-Za-z][A-Za-z '\\-]*$/"];
 
         return [
-            'passengers' => ['required', 'array', 'min:1', 'max:200'],
+            'passengers' => ['nullable', 'array', 'max:200'],
             'passengers.*.type' => ['required', Rule::enum(PassengerType::class)],
             'passengers.*.title' => ['required', Rule::in(self::TITLES)],
             'passengers.*.given_name' => $name,
@@ -31,6 +32,32 @@ trait PassengerRules
             'passengers.*.passport_expiry' => ['nullable', 'date', 'after:today'],
             ...($withTickets ? ['passengers.*.ticket_number' => ['nullable', 'string', 'max:30']] : []),
         ];
+    }
+
+    /**
+     * Drop the rows the agent left completely empty, keeping each row's position so an error
+     * still points at the right one. A row with anything in it still needs both names.
+     */
+    protected function dropEmptyPassengers(): void
+    {
+        $passengers = $this->input('passengers');
+        if (! is_array($passengers)) {
+            return;
+        }
+
+        $fields = ['given_name', 'surname', 'passport_number', 'nationality', 'date_of_birth', 'passport_expiry', 'ticket_number'];
+        $this->merge(['passengers' => array_filter($passengers, function ($p) use ($fields): bool {
+            if (! is_array($p)) {
+                return true;
+            }
+            foreach ($fields as $field) {
+                if (trim((string) ($p[$field] ?? '')) !== '') {
+                    return true;
+                }
+            }
+
+            return false;
+        })]);
     }
 
     /**

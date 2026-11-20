@@ -117,6 +117,15 @@ defineProps<{ booking: BookingDetail }>();
                     </dd>
                 </div>
                 <div
+                    v-if="booking.discount_amount > 0"
+                    class="flex justify-between gap-2 text-emerald-700 dark:text-emerald-400"
+                >
+                    <dt>Discount</dt>
+                    <dd class="tabular-nums">
+                        − {{ formatPKR(booking.discount_amount) }}
+                    </dd>
+                </div>
+                <div
                     class="mt-1 flex items-baseline justify-between gap-2 border-t pt-2"
                 >
                     <dt class="font-semibold">Total</dt>

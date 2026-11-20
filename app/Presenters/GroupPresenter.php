@@ -30,6 +30,8 @@ class GroupPresenter
             'child_fare' => $group->childFare(),
             // Null when the group doesn't take infants.
             'infant_fare' => $group->infant_fare,
+            // Flat PKR off each booking on this group; 0 when there is none.
+            'discount' => (int) $group->discount_per_booking,
             'hold_minutes' => $group->holdMinutes(),
             'notes' => $group->notes,
             'bookable' => $group->isBookable(),

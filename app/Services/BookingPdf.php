@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\BookingStatus;
+use App\Enums\PassengerType;
 use App\Models\Booking;
 use App\Models\BookingPassenger;
 use App\Models\FlightGroupLeg;
@@ -98,19 +99,13 @@ class BookingPdf
                 'baggage' => $leg->baggage,
                 'meal' => $leg->meal,
             ])->all(),
-            'passengers' => $booking->passengers->map(fn (BookingPassenger $p) => [
-                'name' => trim("{$p->title} {$p->given_name} {$p->surname}"),
-                'type' => ucfirst($p->type->value),
-                'passport' => $p->passport_number,
-                'passportExpiry' => $p->passport_expiry?->format('d M Y'),
-                'dob' => $p->date_of_birth?->format('d M Y'),
-                'ticket' => $p->ticket_number,
-            ])->all(),
+            'passengers' => $this->passengerRows($booking),
             'fares' => array_values(array_filter([
                 ['label' => 'Adult', 'count' => $booking->adults, 'fare' => $booking->adult_fare],
                 ['label' => 'Child', 'count' => $booking->children, 'fare' => $booking->child_fare],
                 ['label' => 'Infant', 'count' => $booking->infants, 'fare' => $booking->infant_fare],
             ], fn (array $row) => $row['count'] > 0)),
+            'discount' => (int) $booking->discount_amount,
             'total' => $booking->total_amount,
             'paxSummary' => collect([
                 [$booking->adults, 'adult', 'adults'],
@@ -118,6 +113,33 @@ class BookingPdf
                 [$booking->infants, 'infant', 'infants'],
             ])->filter(fn ($p) => $p[0] > 0)->map(fn ($p) => $p[0].' '.($p[0] === 1 ? $p[1] : $p[2]))->implode(', '),
         ];
+    }
+
+    /**
+     * Every passenger on the booking, adults first: the named ones, then a placeholder for each
+     * one whose name hasn't been added yet, so the list always matches the booking's count.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function passengerRows(Booking $booking): array
+    {
+        $rows = [];
+        foreach ([PassengerType::Adult->value => $booking->adults, PassengerType::Child->value => $booking->children, PassengerType::Infant->value => $booking->infants] as $type => $count) {
+            $named = $booking->passengers->filter(fn (BookingPassenger $p) => $p->type->value === $type)->values();
+            for ($i = 0; $i < $count; $i++) {
+                $p = $named[$i] ?? null;
+                $rows[] = [
+                    'name' => $p ? trim("{$p->title} {$p->given_name} {$p->surname}") : null,
+                    'type' => ucfirst($type),
+                    'passport' => $p?->passport_number,
+                    'passportExpiry' => $p?->passport_expiry?->format('d M Y'),
+                    'dob' => $p?->date_of_birth?->format('d M Y'),
+                    'ticket' => $p?->ticket_number,
+                ];
+            }
+        }
+
+        return $rows;
     }
 
     public static function money(int $amount): string
